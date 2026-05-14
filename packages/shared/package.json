@@ -1,0 +1,42 @@
+{
+  "name": "@tom4u-stats/shared",
+  "version": "0.1.1",
+  "description": "Shared TypeScript types for the toms-stats analytics platform",
+  "keywords": ["analytics", "typescript", "types", "toms-stats"],
+  "author": "Tom Ohms <npm@ohms.pro>",
+  "license": "GPL-3.0-only",
+  "homepage": "https://github.com/tom4u/toms-stats#readme",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/tom4u/toms-stats.git",
+    "directory": "packages/shared"
+  },
+  "bugs": {
+    "url": "https://github.com/tom4u/toms-stats/issues"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "sideEffects": false,
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "types": "./dist/index.d.ts",
+  "files": ["dist"],
+  "scripts": {
+    "prebuild": "node -e \"require('fs').rmSync('dist', { recursive: true, force: true })\"",
+    "build": "tsc",
+    "test": "vitest run",
+    "test:watch": "vitest"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "typescript": "^6.0.3",
+    "vite": "^8.0.12",
+    "vitest": "^4.1.6"
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm *)",
+      "Bash(npx firebase *)",
+      "Bash(npx vitest *)",
+      "Bash(npx svelte-check *)",
+      "Bash(node *)",
+      "Bash(git status)",
+      "Bash(git diff*)",
+      "Bash(git log*)",
+      "Bash(git add *)",
+      "Bash(git commit *)",
+      "Bash(git branch*)",
+      "Bash(git checkout *)"
+    ]
+  },
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "node -e \"const f=process.env.CLAUDE_TOOL_RESULT_FILE_PATH||''; if(f.endsWith('.ts')&&!f.endsWith('.test.ts')&&!f.endsWith('.d.ts')){const t=f.replace(/\\.ts$/,'.test.ts'); const fs=require('fs'); if(!fs.existsSync(t)){process.stdout.write('HINWEIS: Kein Test gefunden für '+f+' — bitte '+t+' anlegen (TDD).\\n');}}\""
+          }
+        ]
+      }
+    ]
+  }
+}

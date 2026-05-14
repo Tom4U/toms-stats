@@ -1,0 +1,19 @@
+{
+  // markdownlint-cli2 configuration
+  // Docs: https://github.com/DavidAnson/markdownlint-cli2#configuration
+  "globs": ["**/*.md"],
+  "ignores": ["**/node_modules/**"],
+  "config": {
+    "default": true,
+    // MD013: allow up to 120 chars; don't enforce in tables or code blocks
+    "MD013": { "line_length": 120, "tables": false, "code_blocks": false },
+    // MD033: allow inline HTML (used in specs and GitHub templates)
+    "MD033": false,
+    // MD060: table column style — disabled; mixed aligned/compact tables are acceptable
+    "MD060": false,
+    // MD024: allow same heading text if under different parent sections
+    "MD024": { "siblings_only": true },
+    // MD041: don't require a top-level heading as first line
+    "MD041": false
+  }
+}

@@ -1,0 +1,38 @@
+# Dependencies
+node_modules/
+# No cross-platform lockfile possible due to OS-specific native bindings (rolldown)
+package-lock.json
+
+# Build output
+dist/
+build/
+apps/tracker/lib/
+.svelte-kit/
+
+# Environment & secrets
+.env
+.env.local
+.env.*.local
+*.secret
+
+# Firebase
+.firebase/
+firebase-debug.log
+firestore-debug.log
+ui-debug.log
+functions-debug.log
+database-debug.log
+pubsub-debug.log
+extensions-debug.log
+hosting-debug.log
+
+# Test output
+coverage/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/settings.json
+*.local

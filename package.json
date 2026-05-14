@@ -1,0 +1,23 @@
+{
+  "name": "toms-stats",
+  "version": "0.1.0",
+  "private": true,
+  "workspaces": [
+    "apps/tracker",
+    "apps/dashboard",
+    "packages/shared"
+  ],
+  "scripts": {
+    "test": "npm run test --workspaces --if-present",
+    "build": "npm run build --workspaces --if-present",
+    "check": "npm run check --workspaces --if-present",
+    "lint:md": "markdownlint-cli2"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "devDependencies": {
+    "firebase-tools": "^15.17.0",
+    "markdownlint-cli2": "^0.22.1"
+  }
+}
