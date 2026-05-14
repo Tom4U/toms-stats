@@ -25,7 +25,7 @@ jobs:
           node-version: '24'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci --ignore-scripts
 
       - name: Lint Markdown
         run: npm run lint:md
@@ -41,7 +41,7 @@ jobs:
           node-version: '24'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci --ignore-scripts
 
       - name: Type check (all workspaces)
         run: npm run check
@@ -60,7 +60,7 @@ jobs:
           node-version: '24'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci --ignore-scripts
 
       - name: Run shared package tests
         run: npm -w packages/shared run test
@@ -89,7 +89,7 @@ jobs:
           node-version: '24'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci --ignore-scripts
 
       - uses: actions/setup-java@v5.2.0
         with:
@@ -100,7 +100,7 @@ jobs:
         run: npm -w apps/tracker run build
 
       - name: Run tracker tests with emulators
-        run: npx firebase emulators:exec --project demo-toms-stats --only firestore,auth,functions "npm -w apps/tracker run test:coverage"
+        run: ./node_modules/.bin/firebase emulators:exec --project demo-toms-stats --only firestore,auth,functions "npm -w apps/tracker run test:coverage"
 
       - name: Upload tracker coverage
         uses: actions/upload-artifact@v7
@@ -121,7 +121,7 @@ jobs:
           node-version: '24'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci --ignore-scripts
 
       - name: Build tracker
         run: npm -w apps/tracker run build
