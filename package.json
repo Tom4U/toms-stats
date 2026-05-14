@@ -16,6 +16,9 @@
   "engines": {
     "node": ">=24"
   },
+  "optionalDependencies": {
+    "@rolldown/binding-linux-x64-gnu": "1.0.0"
+  },
   "devDependencies": {
     "firebase-tools": "^15.17.0",
     "markdownlint-cli2": "^0.22.1"

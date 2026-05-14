@@ -21,7 +21,7 @@
 	},
 	"devDependencies": {
 		"@chromatic-com/storybook": "^5.1.2",
-		"@eslint/compat": "^2.0.4",
+		"@eslint/config-helpers": "^0.6.0",
 		"@eslint/js": "^10.0.1",
 		"@playwright/test": "^1.59.1",
 		"@storybook/addon-a11y": "^10.3.6",

@@ -26,7 +26,7 @@ jobs:
           node-version: '24'
 
       - name: Install dependencies
-        run: npm install
+        run: npm ci --ignore-scripts
 
       - name: Build tracker
         run: npm -w apps/tracker run build

@@ -1,8 +1,5 @@
 # Dependencies
 node_modules/
-# No cross-platform lockfile possible due to OS-specific native bindings (rolldown)
-package-lock.json
-
 # Build output
 dist/
 build/
