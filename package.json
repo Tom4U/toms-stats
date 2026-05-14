@@ -14,7 +14,7 @@
     "lint:md": "markdownlint-cli2"
   },
   "engines": {
-    "node": ">=20"
+    "node": ">=24"
   },
   "devDependencies": {
     "firebase-tools": "^15.17.0",
