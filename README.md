@@ -81,7 +81,7 @@ visitorHash = SHA-256(IP + UserAgent + YYYY-MM-DD + SERVER_SALT)
 | Layer | Technology |
 | --- | --- |
 | Language | TypeScript 6 (strict, no `any`) |
-| Backend | Firebase Cloud Functions v2 (Node 20) |
+| Backend | Firebase Cloud Functions v2 (Node 24) |
 | Database | Firestore |
 | Auth | Firebase Auth (Google) |
 | Frontend | SvelteKit 2 + Tailwind CSS 4 |
@@ -114,7 +114,7 @@ toms-stats/
 
 ### Prerequisites
 
-- Node.js >= 20
+- Node.js >= 24
 - Firebase CLI: `npm install -g firebase-tools`
 - A Firebase project (Blaze plan required for Cloud Functions)
 
