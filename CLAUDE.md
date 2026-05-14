@@ -68,7 +68,7 @@ toms-stats/
 | Layer        | Technology                               |
 |--------------|------------------------------------------|
 | Language     | TypeScript 6 (strict, no `any`)          |
-| Backend      | Firebase Cloud Functions v2 (Node 20)    |
+| Backend      | Firebase Cloud Functions v2 (Node 24)    |
 | Database     | Firestore                                |
 | Auth         | Firebase Auth — Google provider          |
 | Frontend     | SvelteKit 2 + Tailwind CSS 4             |
