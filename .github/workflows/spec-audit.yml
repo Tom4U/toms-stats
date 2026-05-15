@@ -1,0 +1,27 @@
+name: Spec Audit
+
+# Runs on every pull request, including spec-only PRs. Intentionally has no
+# paths-ignore so adding an AC without a matching test is always caught.
+
+on:
+  pull_request:
+    branches:
+      - main
+
+concurrency:
+  group: spec-audit-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  spec-audit:
+    name: Spec ↔ Test Audit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Run spec audit
+        run: node scripts/audit-spec-links.mjs
