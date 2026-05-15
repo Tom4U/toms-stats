@@ -84,9 +84,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-01: Pageview stored with correct fields
+  // AC-01-01: Pageview stored with correct fields
   // -------------------------------------------------------------------------
-  it('AC-01: stores pageview document with all required fields', async () => {
+  it('AC-01-01: stores pageview document with all required fields', async () => {
     const req = makeReq({
       body: {
         siteId: SITE_ID,
@@ -126,9 +126,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-02: No raw IP address in Firestore
+  // AC-01-02: No raw IP address in Firestore
   // -------------------------------------------------------------------------
-  it('AC-02: does not write raw IP address to Firestore', async () => {
+  it('AC-01-02: does not write raw IP address to Firestore', async () => {
     const req = makeReq({
       body: { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/' },
       headers: { 'x-forwarded-for': TEST_IP, 'user-agent': TEST_UA },
@@ -148,9 +148,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-03: Same visitor, same day → same visitorHash
+  // AC-01-03: Same visitor, same day → same visitorHash
   // -------------------------------------------------------------------------
-  it('AC-03: same IP + UA on same day produces identical visitorHash', async () => {
+  it('AC-01-03: same IP + UA on same day produces identical visitorHash', async () => {
     const body = { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/' }
     const headers = { 'x-forwarded-for': TEST_IP, 'user-agent': TEST_UA }
 
@@ -165,9 +165,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-04: Same visitor, different day → different visitorHash
+  // AC-01-04: Same visitor, different day → different visitorHash
   // -------------------------------------------------------------------------
-  it('AC-04: same IP + UA on different days produces different visitorHash', async () => {
+  it('AC-01-04: same IP + UA on different days produces different visitorHash', async () => {
     const body = { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/' }
     const headers = { 'x-forwarded-for': TEST_IP, 'user-agent': TEST_UA }
 
@@ -180,9 +180,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-05: Unknown siteId → 404
+  // AC-01-05: Unknown siteId → 404
   // -------------------------------------------------------------------------
-  it('AC-05: unknown siteId returns 404', async () => {
+  it('AC-01-05: unknown siteId returns 404', async () => {
     const req = makeReq({
       body: { siteId: 'nonexistent-site-xyz', type: 'pageview', url: 'http://test.example.com/' },
       headers: { 'user-agent': TEST_UA },
@@ -195,9 +195,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-06: Missing required field → 400 with descriptive error
+  // AC-01-06: Missing required field → 400 with descriptive error
   // -------------------------------------------------------------------------
-  it('AC-06: missing url returns 400 with error field', async () => {
+  it('AC-01-06: missing url returns 400 with error field', async () => {
     const req = makeReq({
       body: { siteId: SITE_ID, type: 'pageview' },
       headers: { 'user-agent': TEST_UA },
@@ -211,9 +211,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-10: Non-POST request → 405
+  // AC-01-10: Non-POST request → 405
   // -------------------------------------------------------------------------
-  it('AC-10: non-POST request returns 405 with error field', async () => {
+  it('AC-01-10: non-POST request returns 405 with error field', async () => {
     const req = makeReq({
       method: 'GET',
       body: { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/' },
@@ -227,9 +227,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-11: Empty siteId → 400
+  // AC-01-11: Empty siteId → 400
   // -------------------------------------------------------------------------
-  it('AC-11: empty siteId returns 400 with error field', async () => {
+  it('AC-01-11: empty siteId returns 400 with error field', async () => {
     const req = makeReq({
       body: { siteId: '', type: 'pageview', url: 'http://test.example.com/' },
       headers: { 'user-agent': TEST_UA },
@@ -243,9 +243,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-12: Invalid event type → 400
+  // AC-01-12: Invalid event type → 400
   // -------------------------------------------------------------------------
-  it('AC-12: invalid type returns 400 with error field', async () => {
+  it('AC-01-12: invalid type returns 400 with error field', async () => {
     const req = makeReq({
       body: { siteId: SITE_ID, type: 'invalid', url: 'http://test.example.com/' },
       headers: { 'user-agent': TEST_UA },
@@ -259,9 +259,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-13: Malformed URL → 400
+  // AC-01-13: Malformed URL → 400
   // -------------------------------------------------------------------------
-  it('AC-13: malformed url returns 400 with error field', async () => {
+  it('AC-01-13: malformed url returns 400 with error field', async () => {
     const req = makeReq({
       body: { siteId: SITE_ID, type: 'pageview', url: 'not-a-url' },
       headers: { 'user-agent': TEST_UA },
@@ -275,9 +275,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-14: Custom event without name → 400
+  // AC-01-14: Custom event without name → 400
   // -------------------------------------------------------------------------
-  it('AC-14: custom event without name returns 400 with error field', async () => {
+  it('AC-01-14: custom event without name returns 400 with error field', async () => {
     const req = makeReq({
       body: { siteId: SITE_ID, type: 'custom', url: 'http://test.example.com/' },
       headers: { 'user-agent': TEST_UA },
@@ -291,9 +291,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-15: Custom event stored correctly
+  // AC-01-15: Custom event stored correctly
   // -------------------------------------------------------------------------
-  it('AC-15: custom event stores type, name, and props correctly', async () => {
+  it('AC-01-15: custom event stores type, name, and props correctly', async () => {
     const req = makeReq({
       body: {
         siteId: SITE_ID,
@@ -318,9 +318,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-16: Props exceed key limit → 400
+  // AC-01-16: Props exceed key limit → 400
   // -------------------------------------------------------------------------
-  it('AC-16: props with 11 keys returns 400 with error field', async () => {
+  it('AC-01-16: props with 11 keys returns 400 with error field', async () => {
     const props = Object.fromEntries(
       Array.from({ length: 11 }, (_, i) => [`key${i}`, 'value']),
     )
@@ -337,9 +337,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-17: Prop key too long → 400
+  // AC-01-17: Prop key too long → 400
   // -------------------------------------------------------------------------
-  it('AC-17: props key exceeding 100 characters returns 400', async () => {
+  it('AC-01-17: props key exceeding 100 characters returns 400', async () => {
     const req = makeReq({
       body: {
         siteId: SITE_ID,
@@ -358,9 +358,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-18: Prop value too long → 400
+  // AC-01-18: Prop value too long → 400
   // -------------------------------------------------------------------------
-  it('AC-18: props value exceeding 100 characters returns 400', async () => {
+  it('AC-01-18: props value exceeding 100 characters returns 400', async () => {
     const req = makeReq({
       body: {
         siteId: SITE_ID,
@@ -379,9 +379,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-19: sessionHash consistent within hour, different across hours
+  // AC-01-19: sessionHash consistent within hour, different across hours
   // -------------------------------------------------------------------------
-  it('AC-19: same IP + UA in same hour produces identical sessionHash', async () => {
+  it('AC-01-19: same IP + UA in same hour produces identical sessionHash', async () => {
     const body = { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/' }
     const headers = { 'x-forwarded-for': TEST_IP, 'user-agent': TEST_UA }
     const HOUR_A_SAME = new Date('2024-03-15T10:30:00Z') // same 10:xx hour as DAY_A
@@ -395,7 +395,7 @@ describe('handleTrackEvent', () => {
     expect(hashes[0]).toBe(hashes[1])
   })
 
-  it('AC-19: same IP + UA in different hours produces different sessionHash', async () => {
+  it('AC-01-19: same IP + UA in different hours produces different sessionHash', async () => {
     const body = { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/' }
     const headers = { 'x-forwarded-for': TEST_IP, 'user-agent': TEST_UA }
     const NEXT_HOUR = new Date('2024-03-15T11:00:00Z')
@@ -409,9 +409,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-20: Mobile User-Agent → device = 'mobile'
+  // AC-01-20: Mobile User-Agent → device = 'mobile'
   // -------------------------------------------------------------------------
-  it('AC-20: mobile User-Agent produces device "mobile"', async () => {
+  it('AC-01-20: mobile User-Agent produces device "mobile"', async () => {
     const mobileUa =
       'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 ' +
       '(KHTML, like Gecko) Chrome/112.0.0.0 Mobile Safari/537.36'
@@ -428,9 +428,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-21: Tablet User-Agent → device = 'tablet'
+  // AC-01-21: Tablet User-Agent → device = 'tablet'
   // -------------------------------------------------------------------------
-  it('AC-21: tablet User-Agent produces device "tablet"', async () => {
+  it('AC-01-21: tablet User-Agent produces device "tablet"', async () => {
     const tabletUa =
       'Mozilla/5.0 (iPad; CPU OS 16_0 like Mac OS X) AppleWebKit/605.1.15 ' +
       '(KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1'
@@ -447,9 +447,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-22: Firefox User-Agent → browser = 'Firefox'
+  // AC-01-22: Firefox User-Agent → browser = 'Firefox'
   // -------------------------------------------------------------------------
-  it('AC-22: Firefox User-Agent produces browser "Firefox"', async () => {
+  it('AC-01-22: Firefox User-Agent produces browser "Firefox"', async () => {
     const firefoxUa =
       'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0'
     const req = makeReq({
@@ -465,9 +465,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-23: macOS User-Agent → os = 'macOS'
+  // AC-01-23: macOS User-Agent → os = 'macOS'
   // -------------------------------------------------------------------------
-  it('AC-23: macOS User-Agent produces os "macOS"', async () => {
+  it('AC-01-23: macOS User-Agent produces os "macOS"', async () => {
     const macosUa =
       'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +
       '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
@@ -484,9 +484,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-24: req.ip used when X-Forwarded-For header is absent
+  // AC-01-24: req.ip used when X-Forwarded-For header is absent
   // -------------------------------------------------------------------------
-  it('AC-24: same req.ip on same day produces identical visitorHash without X-Forwarded-For', async () => {
+  it('AC-01-24: same req.ip on same day produces identical visitorHash without X-Forwarded-For', async () => {
     const body = { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/' }
 
     await handleTrackEvent(
@@ -507,9 +507,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-25: Non-http/https URL scheme → 400
+  // AC-01-25: Non-http/https URL scheme → 400
   // -------------------------------------------------------------------------
-  it('AC-25: ftp URL scheme returns 400 with error field', async () => {
+  it('AC-01-25: ftp URL scheme returns 400 with error field', async () => {
     const req = makeReq({
       body: { siteId: SITE_ID, type: 'pageview', url: 'ftp://test.example.com/page' },
       headers: { 'user-agent': TEST_UA },
@@ -523,9 +523,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-26: Missing VISITOR_SALT → 500
+  // AC-01-26: Missing VISITOR_SALT → 500
   // -------------------------------------------------------------------------
-  it('AC-26: empty salt returns 500 with error field', async () => {
+  it('AC-01-26: empty salt returns 500 with error field', async () => {
     const req = makeReq({
       body: { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/' },
       headers: { 'user-agent': TEST_UA },
@@ -539,9 +539,9 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
-  // AC-27: Unknown IP → unique per-request visitorHash
+  // AC-01-27: Unknown IP → unique per-request visitorHash
   // -------------------------------------------------------------------------
-  it('AC-27: two requests with no determinable IP produce different visitorHashes', async () => {
+  it('AC-01-27: two requests with no determinable IP produce different visitorHashes', async () => {
     const body = { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/' }
     const noIpReq = {
       method: 'POST' as const,
