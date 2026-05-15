@@ -18,7 +18,7 @@
     "node": ">=24"
   },
   "lint-staged": {
-    "*.{ts,svelte}": "eslint --max-warnings 0 --no-warn-ignored",
+    "apps/**/*.{ts,svelte}": "eslint --max-warnings 0 --no-warn-ignored",
     "*.md": "markdownlint-cli2"
   },
   "optionalDependencies": {
