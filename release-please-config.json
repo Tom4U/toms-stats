@@ -1,0 +1,40 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "release-type": "node",
+  "include-component-in-tag": true,
+  "include-v-in-tag": true,
+  "separate-pull-requests": false,
+  "bootstrap-sha": "4f581b314a1489f77b40288963af533c13acafbb",
+  "packages": {
+    ".": {
+      "component": "monorepo",
+      "package-name": "toms-stats"
+    },
+    "packages/shared": {
+      "component": "shared",
+      "package-name": "@tom4u-stats/shared"
+    },
+    "apps/tracker": {
+      "component": "tracker",
+      "package-name": "@tom4u-stats/tracker"
+    },
+    "apps/dashboard": {
+      "component": "dashboard",
+      "package-name": "@tom4u-stats/dashboard"
+    }
+  },
+  "changelog-sections": [
+    { "type": "feat", "section": "Features" },
+    { "type": "fix", "section": "Bug Fixes" },
+    { "type": "perf", "section": "Performance" },
+    { "type": "deps", "section": "Dependencies" },
+    { "type": "revert", "section": "Reverts" },
+    { "type": "docs", "section": "Documentation", "hidden": true },
+    { "type": "style", "section": "Style", "hidden": true },
+    { "type": "chore", "section": "Chores", "hidden": true },
+    { "type": "refactor", "section": "Refactoring", "hidden": true },
+    { "type": "test", "section": "Tests", "hidden": true },
+    { "type": "build", "section": "Build", "hidden": true },
+    { "type": "ci", "section": "CI", "hidden": true }
+  ]
+}
