@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
+    "check": "tsc --noEmit",
     "lint": "eslint src",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
