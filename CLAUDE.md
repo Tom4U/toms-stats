@@ -239,7 +239,7 @@ Release PR per component. Merging a Release PR creates the per-component git tag
 - `feat!:` / `fix!:` / `BREAKING CHANGE:` footer → major bump
 - `chore:` / `docs:` / `refactor:` / `style:` / `ci:` / `build:` / `test:` → no bump
 
-Root `package.json` is included as the monorepo release anchor — its version drives the umbrella tag.
+Root `package.json` is included as the `toms-stats` release anchor — its version drives the umbrella tag (e.g. `toms-stats-v0.1.1`).
 
 ## Backlog & Tracking
 

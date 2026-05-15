@@ -7,7 +7,7 @@
   "bootstrap-sha": "4f581b314a1489f77b40288963af533c13acafbb",
   "packages": {
     ".": {
-      "component": "monorepo",
+      "component": "toms-stats",
       "package-name": "toms-stats"
     },
     "packages/shared": {
