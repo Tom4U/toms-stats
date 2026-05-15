@@ -256,6 +256,121 @@ Auth-protected. Returns all registered sites.
 **When** the function validates the payload
 **Then** it returns HTTP 400 with a descriptive `error` field.
 
+### AC-10: Non-POST request → 405
+
+**Given** a request with method `GET` (or any non-`POST`) to `/api/event`
+**When** the function runs
+**Then** it returns HTTP 405 with a descriptive `error` field.
+
+### AC-11: Empty siteId → 400
+
+**Given** a POST with `siteId: ""` (empty string)
+**When** the function validates the payload
+**Then** it returns HTTP 400 with a descriptive `error` field.
+
+### AC-12: Invalid event type → 400
+
+**Given** a POST with `type: "invalid"` (not `"pageview"` or `"custom"`)
+**When** the function validates the payload
+**Then** it returns HTTP 400 with a descriptive `error` field.
+
+### AC-13: Malformed URL → 400
+
+**Given** a POST with `url: "not-a-url"` (not parseable as a URL)
+**When** the function validates the payload
+**Then** it returns HTTP 400 with a descriptive `error` field.
+
+### AC-14: Custom event requires name → 400
+
+**Given** a POST with `type: "custom"` and no `name` field
+**When** the function validates the payload
+**Then** it returns HTTP 400 with a descriptive `error` field.
+
+### AC-15: Custom event stored correctly
+
+**Given** a valid POST with `type: "custom"`, `name: "signup_click"`, and `props: { plan: "pro" }`
+**When** the function executes
+**Then** the event document has `type: "custom"`, `name: "signup_click"`, and `props: { plan: "pro" }`.
+
+### AC-16: Props exceed key limit → 400
+
+**Given** a POST with `props` containing 11 keys
+**When** the function validates the payload
+**Then** it returns HTTP 400 with a descriptive `error` field.
+
+### AC-17: Prop key too long → 400
+
+**Given** a POST with a `props` key of 101 characters
+**When** the function validates the payload
+**Then** it returns HTTP 400 with a descriptive `error` field.
+
+### AC-18: Prop value too long → 400
+
+**Given** a POST with a `props` value of 101 characters
+**When** the function validates the payload
+**Then** it returns HTTP 400 with a descriptive `error` field.
+
+### AC-19: sessionHash is consistent within the same hour and differs across hours
+
+**Given** two requests from the same IP + User-Agent within the same clock hour
+**When** both are processed
+**Then** both event documents have identical `sessionHash` values.
+
+**Given** two requests from the same IP + User-Agent in different clock hours
+**When** both are processed
+**Then** the event documents have different `sessionHash` values.
+
+### AC-20: Mobile User-Agent → device = 'mobile'
+
+**Given** a POST with a mobile browser User-Agent
+**When** the function processes the request
+**Then** the event document has `device: "mobile"`.
+
+### AC-21: Tablet User-Agent → device = 'tablet'
+
+**Given** a POST with a tablet browser User-Agent
+**When** the function processes the request
+**Then** the event document has `device: "tablet"`.
+
+### AC-22: Firefox User-Agent → browser = 'Firefox'
+
+**Given** a POST with a Firefox browser User-Agent
+**When** the function processes the request
+**Then** the event document has `browser: "Firefox"`.
+
+### AC-23: macOS User-Agent → os = 'macOS'
+
+**Given** a POST with a macOS browser User-Agent
+**When** the function processes the request
+**Then** the event document has `os: "macOS"`.
+
+### AC-24: IP from req.ip when X-Forwarded-For is absent
+
+**Given** a POST with no `X-Forwarded-For` header but a known `req.ip`
+**When** the function processes the request
+**Then** the visitorHash matches the hash computed from `req.ip`
+(i.e., two identical requests both using `req.ip` produce the same hash).
+
+### AC-25: Non-http/https URL scheme → 400
+
+**Given** a POST with a `url` whose scheme is not `http` or `https` (e.g. `ftp://example.com/page`)
+**When** the function validates the payload
+**Then** it returns HTTP 400 with a descriptive `error` field.
+
+### AC-26: Missing VISITOR_SALT → 500
+
+**Given** the `VISITOR_SALT` environment variable is empty or not set
+**When** the function receives any POST request
+**Then** it returns HTTP 500 with a descriptive `error` field
+(fail-fast: without a real salt, the privacy guarantee of AC-02/03/04 cannot be upheld).
+
+### AC-27: Unknown IP → unique per-request visitorHash
+
+**Given** two POST requests where neither `X-Forwarded-For` nor `req.ip` can be determined
+**When** both requests are processed
+**Then** the two event documents have **different** `visitorHash` values
+(a random per-request token is mixed in so unknown-IP visitors do not share a single identity).
+
 ### AC-07: Stats endpoint requires auth
 
 **Given** a GET to `/api/stats` without an Authorization header
