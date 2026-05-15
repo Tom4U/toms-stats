@@ -26,6 +26,9 @@ hosting-debug.log
 # Test output
 coverage/
 
+# Husky (auto-generated stubs)
+.husky/_/
+
 # OS
 .DS_Store
 Thumbs.db
