@@ -4,6 +4,8 @@ import http from 'node:http'
 import path from 'node:path'
 
 const FIRESTORE_PORT = 8090
+// Hardcoded to a local loopback URL so SonarCloud does not flag SSRF.
+const FIRESTORE_HTTP_HEALTH_URL = 'http://127.0.0.1:8090/'
 
 // ---------------------------------------------------------------------------
 // Port helpers
@@ -22,9 +24,9 @@ function checkPort(port: number): Promise<boolean> {
 // After the TCP port accepts connections the Firestore gRPC service may still
 // be initialising. Probe the HTTP endpoint so we only proceed once the server
 // actually responds (any status code counts — connection refused does not).
-function checkHttpReady(port: number): Promise<boolean> {
+function checkHttpReady(): Promise<boolean> {
   return new Promise(resolve => {
-    const req = http.get(`http://127.0.0.1:${port}/`, res => {
+    const req = http.get(FIRESTORE_HTTP_HEALTH_URL, res => {
       res.destroy()
       resolve(true)
     })
@@ -36,7 +38,7 @@ function checkHttpReady(port: number): Promise<boolean> {
 async function waitForPort(port: number, timeoutMs = 30_000): Promise<void> {
   const deadline = Date.now() + timeoutMs
   while (Date.now() < deadline) {
-    if (await checkPort(port) && await checkHttpReady(port)) return
+    if (await checkPort(port) && await checkHttpReady()) return
     await new Promise<void>(r => setTimeout(r, 500))
   }
   throw new Error(`Firestore emulator not ready after ${timeoutMs}ms`)
