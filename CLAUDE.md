@@ -241,6 +241,35 @@ Release PR per component. Merging a Release PR creates the per-component git tag
 
 Root `package.json` is included as the monorepo release anchor — its version drives the umbrella tag.
 
+## Backlog & Tracking
+
+Deferred work — features pending implementation and acknowledged tech debt — lives in **GitHub Issues**,
+not in code comments or chat history. Two labels carry the backlog:
+
+- **`roadmap`** — major work items, usually one per pending spec or large feature area. Often paired with `spec-pending`.
+- **`tech-debt`** — deferred technical follow-ups (coverage thresholds for empty workspaces, etc.).
+
+The [`.spec-audit-allowlist.json`](.spec-audit-allowlist.json) is the AC-level pending list: every entry
+there must correspond to an open `spec-pending` issue. Remove allowlist entries as ACs gain tests, and
+close the matching issue when all of its ACs are covered.
+
+```bash
+gh issue list --label roadmap      # what's coming
+gh issue list --label tech-debt    # what's been deferred
+```
+
+## README & Docs Freshness
+
+User-facing changes must update the docs **in the same PR** that ships them. The PR template enforces
+this with explicit checkboxes.
+
+- `README.md` Features table — must reflect implementation status per spec
+- `CLAUDE.md` — must reflect current conventions, commands, structure
+- `.spec-audit-allowlist.json` — must shrink as ACs get tested
+- Backlog issues — must close (or update) when the underlying work lands
+
+"Update later" is not acceptable for these. If the docs would drift, the PR is incomplete.
+
 ## Firebase Setup
 
 Initialize the Firebase project once:
@@ -340,3 +369,5 @@ When adding a new suppression, append a row to this table and use `// NOSONAR: <
 - Do **not** edit `version` fields in any `package.json` — release-please owns versions.
 - Do **not** bypass git hooks with `--no-verify` — fix the issue or use the correct commit type.
 - Do **not** add `// NOSONAR` without a justification text after the colon.
+- Do **not** ship a user-facing change without updating README, CLAUDE.md, and the spec-audit allowlist in the same PR.
+- Do **not** hide deferred work in code comments — open a GitHub issue with `roadmap` or `tech-debt` label.
