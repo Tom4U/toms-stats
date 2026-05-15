@@ -79,7 +79,7 @@ export function parseUserAgent(ua: string): ParsedUA {
     [/OPR\/([\d]+)/, 'Opera'],
     [/Firefox\/([\d]+)/, 'Firefox'],
     [/Chrome\/([\d]+)/, 'Chrome'],
-    [/Version\/([\d]+).*Safari/, 'Safari'],
+    [/Version\/([\d]+)[^)]*Safari/, 'Safari'],
   ]
 
   for (const [re, name] of matchers) {
