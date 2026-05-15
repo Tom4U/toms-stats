@@ -37,6 +37,9 @@ jobs:
           distribution: temurin
           java-version: '21'
 
+      - name: Build shared package
+        run: npm -w packages/shared run build
+
       - name: Build tracker
         run: npm -w apps/tracker run build
 
