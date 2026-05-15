@@ -209,4 +209,300 @@ describe('handleTrackEvent', () => {
     expect(res.statusCode).toBe(400)
     expect((res.body as { error: string }).error).toBeTruthy()
   })
+
+  // -------------------------------------------------------------------------
+  // AC-10: Non-POST request → 405
+  // -------------------------------------------------------------------------
+  it('AC-10: non-POST request returns 405 with error field', async () => {
+    const req = makeReq({
+      method: 'GET',
+      body: { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/' },
+    })
+    const res = new MockResponse()
+
+    await handleTrackEvent(req, res)
+
+    expect(res.statusCode).toBe(405)
+    expect((res.body as { error: string }).error).toBeTruthy()
+  })
+
+  // -------------------------------------------------------------------------
+  // AC-11: Empty siteId → 400
+  // -------------------------------------------------------------------------
+  it('AC-11: empty siteId returns 400 with error field', async () => {
+    const req = makeReq({
+      body: { siteId: '', type: 'pageview', url: 'http://test.example.com/' },
+      headers: { 'user-agent': TEST_UA },
+    })
+    const res = new MockResponse()
+
+    await handleTrackEvent(req, res)
+
+    expect(res.statusCode).toBe(400)
+    expect((res.body as { error: string }).error).toBeTruthy()
+  })
+
+  // -------------------------------------------------------------------------
+  // AC-12: Invalid event type → 400
+  // -------------------------------------------------------------------------
+  it('AC-12: invalid type returns 400 with error field', async () => {
+    const req = makeReq({
+      body: { siteId: SITE_ID, type: 'invalid', url: 'http://test.example.com/' },
+      headers: { 'user-agent': TEST_UA },
+    })
+    const res = new MockResponse()
+
+    await handleTrackEvent(req, res)
+
+    expect(res.statusCode).toBe(400)
+    expect((res.body as { error: string }).error).toBeTruthy()
+  })
+
+  // -------------------------------------------------------------------------
+  // AC-13: Malformed URL → 400
+  // -------------------------------------------------------------------------
+  it('AC-13: malformed url returns 400 with error field', async () => {
+    const req = makeReq({
+      body: { siteId: SITE_ID, type: 'pageview', url: 'not-a-url' },
+      headers: { 'user-agent': TEST_UA },
+    })
+    const res = new MockResponse()
+
+    await handleTrackEvent(req, res)
+
+    expect(res.statusCode).toBe(400)
+    expect((res.body as { error: string }).error).toBeTruthy()
+  })
+
+  // -------------------------------------------------------------------------
+  // AC-14: Custom event without name → 400
+  // -------------------------------------------------------------------------
+  it('AC-14: custom event without name returns 400 with error field', async () => {
+    const req = makeReq({
+      body: { siteId: SITE_ID, type: 'custom', url: 'http://test.example.com/' },
+      headers: { 'user-agent': TEST_UA },
+    })
+    const res = new MockResponse()
+
+    await handleTrackEvent(req, res)
+
+    expect(res.statusCode).toBe(400)
+    expect((res.body as { error: string }).error).toBeTruthy()
+  })
+
+  // -------------------------------------------------------------------------
+  // AC-15: Custom event stored correctly
+  // -------------------------------------------------------------------------
+  it('AC-15: custom event stores type, name, and props correctly', async () => {
+    const req = makeReq({
+      body: {
+        siteId: SITE_ID,
+        type: 'custom',
+        name: 'signup_click',
+        url: 'http://test.example.com/pricing',
+        props: { plan: 'pro' },
+      },
+      headers: { 'x-forwarded-for': TEST_IP, 'user-agent': TEST_UA },
+    })
+    const res = new MockResponse()
+
+    await handleTrackEvent(req, res, DAY_A)
+
+    expect(res.statusCode).toBe(204)
+    const snap = await db.collection('events').get()
+    expect(snap.size).toBe(1)
+    const data = snap.docs[0]!.data()
+    expect(data['type']).toBe('custom')
+    expect(data['name']).toBe('signup_click')
+    expect(data['props']).toEqual({ plan: 'pro' })
+  })
+
+  // -------------------------------------------------------------------------
+  // AC-16: Props exceed key limit → 400
+  // -------------------------------------------------------------------------
+  it('AC-16: props with 11 keys returns 400 with error field', async () => {
+    const props = Object.fromEntries(
+      Array.from({ length: 11 }, (_, i) => [`key${i}`, 'value']),
+    )
+    const req = makeReq({
+      body: { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/', props },
+      headers: { 'user-agent': TEST_UA },
+    })
+    const res = new MockResponse()
+
+    await handleTrackEvent(req, res)
+
+    expect(res.statusCode).toBe(400)
+    expect((res.body as { error: string }).error).toBeTruthy()
+  })
+
+  // -------------------------------------------------------------------------
+  // AC-17: Prop key too long → 400
+  // -------------------------------------------------------------------------
+  it('AC-17: props key exceeding 100 characters returns 400', async () => {
+    const req = makeReq({
+      body: {
+        siteId: SITE_ID,
+        type: 'pageview',
+        url: 'http://test.example.com/',
+        props: { ['k'.repeat(101)]: 'value' },
+      },
+      headers: { 'user-agent': TEST_UA },
+    })
+    const res = new MockResponse()
+
+    await handleTrackEvent(req, res)
+
+    expect(res.statusCode).toBe(400)
+    expect((res.body as { error: string }).error).toBeTruthy()
+  })
+
+  // -------------------------------------------------------------------------
+  // AC-18: Prop value too long → 400
+  // -------------------------------------------------------------------------
+  it('AC-18: props value exceeding 100 characters returns 400', async () => {
+    const req = makeReq({
+      body: {
+        siteId: SITE_ID,
+        type: 'pageview',
+        url: 'http://test.example.com/',
+        props: { key: 'v'.repeat(101) },
+      },
+      headers: { 'user-agent': TEST_UA },
+    })
+    const res = new MockResponse()
+
+    await handleTrackEvent(req, res)
+
+    expect(res.statusCode).toBe(400)
+    expect((res.body as { error: string }).error).toBeTruthy()
+  })
+
+  // -------------------------------------------------------------------------
+  // AC-19: sessionHash consistent within hour, different across hours
+  // -------------------------------------------------------------------------
+  it('AC-19: same IP + UA in same hour produces identical sessionHash', async () => {
+    const body = { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/' }
+    const headers = { 'x-forwarded-for': TEST_IP, 'user-agent': TEST_UA }
+    const HOUR_A_SAME = new Date('2024-03-15T10:30:00Z') // same 10:xx hour as DAY_A
+
+    await handleTrackEvent(makeReq({ body, headers }), new MockResponse(), DAY_A)
+    await handleTrackEvent(makeReq({ body, headers }), new MockResponse(), HOUR_A_SAME)
+
+    const snap = await db.collection('events').get()
+    expect(snap.size).toBe(2)
+    const hashes = snap.docs.map(d => d.data()['sessionHash'] as string)
+    expect(hashes[0]).toBe(hashes[1])
+  })
+
+  it('AC-19: same IP + UA in different hours produces different sessionHash', async () => {
+    const body = { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/' }
+    const headers = { 'x-forwarded-for': TEST_IP, 'user-agent': TEST_UA }
+    const NEXT_HOUR = new Date('2024-03-15T11:00:00Z')
+
+    await handleTrackEvent(makeReq({ body, headers }), new MockResponse(), DAY_A)
+    await handleTrackEvent(makeReq({ body, headers }), new MockResponse(), NEXT_HOUR)
+
+    const snap = await db.collection('events').get()
+    const hashes = snap.docs.map(d => d.data()['sessionHash'] as string)
+    expect(hashes[0]).not.toBe(hashes[1])
+  })
+
+  // -------------------------------------------------------------------------
+  // AC-20: Mobile User-Agent → device = 'mobile'
+  // -------------------------------------------------------------------------
+  it('AC-20: mobile User-Agent produces device "mobile"', async () => {
+    const mobileUa =
+      'Mozilla/5.0 (Linux; Android 13; Pixel 7) AppleWebKit/537.36 ' +
+      '(KHTML, like Gecko) Chrome/112.0.0.0 Mobile Safari/537.36'
+    const req = makeReq({
+      body: { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/' },
+      headers: { 'x-forwarded-for': TEST_IP, 'user-agent': mobileUa },
+    })
+    const res = new MockResponse()
+
+    await handleTrackEvent(req, res, DAY_A)
+
+    const snap = await db.collection('events').get()
+    expect(snap.docs[0]!.data()['device']).toBe('mobile')
+  })
+
+  // -------------------------------------------------------------------------
+  // AC-21: Tablet User-Agent → device = 'tablet'
+  // -------------------------------------------------------------------------
+  it('AC-21: tablet User-Agent produces device "tablet"', async () => {
+    const tabletUa =
+      'Mozilla/5.0 (iPad; CPU OS 16_0 like Mac OS X) AppleWebKit/605.1.15 ' +
+      '(KHTML, like Gecko) Version/16.0 Mobile/15E148 Safari/604.1'
+    const req = makeReq({
+      body: { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/' },
+      headers: { 'x-forwarded-for': TEST_IP, 'user-agent': tabletUa },
+    })
+    const res = new MockResponse()
+
+    await handleTrackEvent(req, res, DAY_A)
+
+    const snap = await db.collection('events').get()
+    expect(snap.docs[0]!.data()['device']).toBe('tablet')
+  })
+
+  // -------------------------------------------------------------------------
+  // AC-22: Firefox User-Agent → browser = 'Firefox'
+  // -------------------------------------------------------------------------
+  it('AC-22: Firefox User-Agent produces browser "Firefox"', async () => {
+    const firefoxUa =
+      'Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:125.0) Gecko/20100101 Firefox/125.0'
+    const req = makeReq({
+      body: { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/' },
+      headers: { 'x-forwarded-for': TEST_IP, 'user-agent': firefoxUa },
+    })
+    const res = new MockResponse()
+
+    await handleTrackEvent(req, res, DAY_A)
+
+    const snap = await db.collection('events').get()
+    expect(snap.docs[0]!.data()['browser']).toBe('Firefox')
+  })
+
+  // -------------------------------------------------------------------------
+  // AC-23: macOS User-Agent → os = 'macOS'
+  // -------------------------------------------------------------------------
+  it('AC-23: macOS User-Agent produces os "macOS"', async () => {
+    const macosUa =
+      'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 ' +
+      '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+    const req = makeReq({
+      body: { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/' },
+      headers: { 'x-forwarded-for': TEST_IP, 'user-agent': macosUa },
+    })
+    const res = new MockResponse()
+
+    await handleTrackEvent(req, res, DAY_A)
+
+    const snap = await db.collection('events').get()
+    expect(snap.docs[0]!.data()['os']).toBe('macOS')
+  })
+
+  // -------------------------------------------------------------------------
+  // AC-24: req.ip used when X-Forwarded-For header is absent
+  // -------------------------------------------------------------------------
+  it('AC-24: same req.ip on same day produces identical visitorHash without X-Forwarded-For', async () => {
+    const body = { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/' }
+
+    await handleTrackEvent(
+      makeReq({ body, headers: { 'user-agent': TEST_UA }, ip: TEST_IP }),
+      new MockResponse(),
+      DAY_A,
+    )
+    await handleTrackEvent(
+      makeReq({ body, headers: { 'user-agent': TEST_UA }, ip: TEST_IP }),
+      new MockResponse(),
+      DAY_A,
+    )
+
+    const snap = await db.collection('events').get()
+    expect(snap.size).toBe(2)
+    const hashes = snap.docs.map(d => d.data()['visitorHash'] as string)
+    expect(hashes[0]).toBe(hashes[1])
+  })
 })
