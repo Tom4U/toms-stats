@@ -52,6 +52,9 @@ jobs:
       - name: Type check dashboard
         run: npm -w apps/dashboard run check
 
+      - name: Lint tracker
+        run: npm -w apps/tracker run lint
+
       - name: Lint dashboard
         run: npm -w apps/dashboard run lint
 
