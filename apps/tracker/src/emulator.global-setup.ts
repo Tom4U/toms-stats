@@ -62,7 +62,7 @@ function killTree(pid: number): Promise<void> {
   return new Promise(resolve => {
     if (process.platform === 'win32') {
       // /F = force, /T = tree (all descendants)
-      const t = spawn('taskkill', ['/F', '/T', '/PID', String(pid)], { stdio: 'ignore' })
+      const t = spawn('taskkill', ['/F', '/T', '/PID', String(pid)], { stdio: 'ignore' }) // NOSONAR: PATH-resolved taskkill is test-setup only, no user input, Windows process-tree cleanup
       t.once('close', () => resolve())
     } else {
       try {
@@ -84,7 +84,7 @@ function spawnEmulator(projectRoot: string): ChildProcess {
     // Use cmd.exe with explicit args so argument boundaries are unambiguous
     // and no shell metacharacter expansion can occur. All inputs are
     // hardcoded constants — no user data involved.
-    return spawn(
+    return spawn( // NOSONAR: test-only emulator launch, all args hardcoded, no user input
       'cmd.exe',
       ['/c', 'npx', 'firebase', 'emulators:start', '--only', 'firestore', '--project', 'toms-stats'],
       { cwd: projectRoot, stdio: 'ignore' },
@@ -92,7 +92,7 @@ function spawnEmulator(projectRoot: string): ChildProcess {
   }
   // Unix: shell:false + detached:true puts the child in its own process group,
   // letting kill(-pid) terminate all descendants at once.
-  return spawn(
+  return spawn( // NOSONAR: test-only emulator launch, all args hardcoded, no user input
     'npx',
     ['firebase', 'emulators:start', '--only', 'firestore', '--project', 'toms-stats'],
     { cwd: projectRoot, stdio: 'ignore', detached: true },

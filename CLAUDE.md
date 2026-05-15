@@ -89,6 +89,22 @@ toms-stats/
 - Before writing any implementation file, verify the spec exists and is complete.
 - Changing a feature means updating the spec first.
 
+**AC-ID format**: `AC-<spec-prefix>-<NN>` where `<spec-prefix>` is the two-digit prefix of the spec
+filename and `<NN>` is the local AC number within that spec.
+
+- `AC-01-03` — third AC in `specs/01-tracking-api.md`
+- `AC-02-05` — fifth AC in `specs/02-dashboard.md`
+
+Each AC is rendered in the spec as a heading with a bold ID, and test descriptions reference the AC-ID:
+
+```ts
+it('AC-01-03 — returns 404 for unknown siteId', () => { ... })
+```
+
+Legacy tests using the bare `AC-NN` format (no spec prefix) are accepted during migration — the
+spec-audit script (CI) treats them as belonging to the spec mapped by file location
+(e.g. `apps/tracker/**` → `01-tracking-api.md`). New tests must use the prefixed format.
+
 ### Test Driven Development (TDD)
 
 1. Write a failing test that captures the acceptance criterion.
@@ -120,12 +136,28 @@ Tests MUST use the local emulators. Never call real Firestore or Firebase Auth i
 - No abstractions before the third use case.
 - Comments only for non-obvious WHY (hidden constraints, workarounds) — never WHAT.
 
+### Conventional Commits & Pre-commit Hooks
+
+- All commits use the [Conventional Commits](https://www.conventionalcommits.org/) format.
+- `commitlint` enforces the format via the `commit-msg` hook.
+- `husky` installs hooks via the `prepare` script in root `package.json`.
+- `lint-staged` runs ESLint and markdownlint on staged files (pre-commit).
+- `scripts/check-test-coupling.mjs` blocks `feat:`/`fix:` commits that touch `apps/*/src` or
+  `packages/*/src` without staging accompanying tests. Exempt types: `chore`, `docs`, `refactor`,
+  `style`, `ci`, `build`, `test`, `perf`, `revert`.
+
 ### Git / GitHub Flow
 
-- Branch from `main`: `feat/<name>`, `fix/<name>`, `docs/<name>`, `chore/<name>`.
-- Open a PR to `main`; CI must be green before merge.
-- Every PR references the spec acceptance criterion it fulfils (e.g. `Closes AC-03`).
+- Branch from `main`: `feat/<name>`, `fix/<name>`, `docs/<name>`, `chore/<name>`. Use `wip/<name>`
+  for backup pushes that should not auto-open a PR.
+- First push → open a **draft PR** immediately (`gh pr create --draft`).
+- Subsequent pushes that add `feat:`/`fix:` content → update PR description
+  (`gh pr edit --body ...`). Lint/refactor pushes do not require updates.
+- Mark ready when complete (`gh pr ready <nr>`); CI must be green before merge.
+- After every push, wait for all CI workflow runs to complete before continuing.
+- Every PR references the spec acceptance criterion it fulfils (e.g. `Closes AC-01-03`).
 - No direct pushes to `main`.
+- Version bumps are owned by release-please — **do not** edit `version` fields manually.
 
 ## Commands
 
@@ -178,8 +210,36 @@ npm -w apps/dashboard run build-storybook       # static build → storybook-sta
 git switch main && git pull                     # always start from latest main
 git switch -c feat/<name>                       # cut a feature branch
 git push -u origin feat/<name>                  # push and track remote
-gh pr create --fill                             # open PR (GitHub CLI)
+gh pr create --draft --fill                     # open draft PR (GitHub CLI)
+gh pr edit <nr> --body "..."                    # update PR description after feat/fix push
+gh pr ready <nr>                                # mark ready when complete
 ```
+
+## Versioning & Releases
+
+This monorepo uses [release-please](https://github.com/googleapis/release-please) to drive
+Semantic Versioning from Conventional Commits.
+
+| File | Purpose |
+|------|---------|
+| `release-please-config.json` | Per-component configuration (which packages, changelog sections, bootstrap SHA) |
+| `.release-please-manifest.json` | Current version per component — release-please reads and updates this |
+| `.github/workflows/release-please.yml` | Runs on every push to `main` |
+| `CHANGELOG.md` (per package + root) | Populated by release-please |
+
+On every push to `main`, release-please scans new conventional commits and opens (or updates) a
+Release PR per component. Merging a Release PR creates the per-component git tag (e.g.
+`shared-v0.2.0`, `tracker-v0.1.0`) and triggers downstream workflows. `npm-publish.yml` fires on
+`shared-v*` tags to publish `@tom4u-stats/shared` to npm.
+
+**Manual version bumps are forbidden.** Use commit types to drive versions:
+
+- `feat:` → minor bump
+- `fix:` → patch bump
+- `feat!:` / `fix!:` / `BREAKING CHANGE:` footer → major bump
+- `chore:` / `docs:` / `refactor:` / `style:` / `ci:` / `build:` / `test:` → no bump
+
+Root `package.json` is included as the monorepo release anchor — its version drives the umbrella tag.
 
 ## Firebase Setup
 
@@ -252,6 +312,21 @@ Full schema → [specs/01-tracking-api.md](specs/01-tracking-api.md)
 | `FIREBASE_SERVICE_ACCOUNT`| deploy.yml        | Firebase Console → Service accounts → JSON key   |
 | `SONAR_TOKEN`             | ci.yml            | SonarCloud → My Account → Security → Tokens      |
 
+`npm-publish.yml` uses npm Trusted Publishing (OIDC, no secret required) — configure the
+`@tom4u-stats/shared` package on npmjs.com to trust this repository via GitHub Actions.
+
+## NOSONAR Inventory
+
+Suppressions are inline with a justification — no bare `// NOSONAR`, no UI-only "Mark Safe".
+
+| Location | Rule (Sonar) | Justification |
+|----------|--------------|---------------|
+| `apps/tracker/src/emulator.global-setup.ts` `spawn('taskkill', …)` | PATH-resolution security hotspot | Test-setup only, Windows process-tree cleanup, no user input |
+| `apps/tracker/src/emulator.global-setup.ts` `spawn('cmd.exe', …)` | PATH-resolution security hotspot | Test-only emulator launch, all args hardcoded |
+| `apps/tracker/src/emulator.global-setup.ts` `spawn('npx', …)` (Unix) | PATH-resolution security hotspot | Test-only emulator launch, all args hardcoded |
+
+When adding a new suppression, append a row to this table and use `// NOSONAR: <reason>` at the call site.
+
 ## Rules
 
 - Do **not** store raw IP addresses in Firestore.
@@ -262,3 +337,6 @@ Full schema → [specs/01-tracking-api.md](specs/01-tracking-api.md)
 - Do **not** call live Firebase services in tests — use emulators.
 - Do **not** add features outside the current spec scope.
 - Do **not** push directly to `main` — always use a PR.
+- Do **not** edit `version` fields in any `package.json` — release-please owns versions.
+- Do **not** bypass git hooks with `--no-verify` — fix the issue or use the correct commit type.
+- Do **not** add `// NOSONAR` without a justification text after the colon.

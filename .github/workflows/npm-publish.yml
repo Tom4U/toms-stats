@@ -3,13 +3,18 @@ name: Publish to npm
 on:
   push:
     tags:
-      - 'v*'
+      - 'shared-v*'
+
+concurrency:
+  group: npm-publish-shared-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   publish:
     name: Publish @tom4u-stats/shared
     runs-on: ubuntu-latest
     permissions:
+      contents: read
       id-token: write  # required for npm Trusted Publishing (OIDC)
     steps:
       - uses: actions/checkout@v6
@@ -25,6 +30,9 @@ jobs:
 
       - name: Run tests
         run: npm -w packages/shared run test
+
+      - name: Build shared package
+        run: npm -w packages/shared run build
 
       - name: Publish @tom4u-stats/shared
         run: npm -w packages/shared publish --access public --provenance
