@@ -11,10 +11,15 @@
     "test": "npm run test --workspaces --if-present",
     "build": "npm run build --workspaces --if-present",
     "check": "npm run check --workspaces --if-present",
-    "lint:md": "markdownlint-cli2"
+    "lint:md": "markdownlint-cli2",
+    "prepare": "husky"
   },
   "engines": {
     "node": ">=24"
+  },
+  "lint-staged": {
+    "*.{ts,svelte}": "eslint --max-warnings 0 --no-warn-ignored",
+    "*.md": "markdownlint-cli2"
   },
   "optionalDependencies": {
     "@esbuild/linux-x64": "0.27.7",
@@ -23,8 +28,12 @@
     "lightningcss-linux-x64-gnu": "1.32.0"
   },
   "devDependencies": {
+    "@commitlint/cli": "^21.0.1",
+    "@commitlint/config-conventional": "^21.0.1",
     "eslint-plugin-sonarjs": "^4.0.3",
     "firebase-tools": "^15.17.0",
+    "husky": "^9.1.7",
+    "lint-staged": "^17.0.4",
     "markdownlint-cli2": "^0.22.1"
   }
 }
