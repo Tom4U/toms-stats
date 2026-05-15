@@ -2,9 +2,9 @@
 
 ## Project
 
-Personal, self-hosted web analytics platform (similar to Plausible Analytics).
-Tracks page views, unique visitors, referrers, browser/device/OS, and custom events
-for the owner's own sites and apps. Includes a QR-code manager for trackable links.
+Personal, self-hosted, cookie-free web analytics platform for the owner's own sites and apps.
+Tracks page views, unique visitors, referrers, browser/device/OS, and custom events.
+Includes a QR-code manager for trackable links.
 Single owner, low traffic (target: <10k events/day). Not a SaaS product.
 Open source under GPL-3.0, published on GitHub (`tom4u/toms-stats`) and npm (`@tom4u-stats`).
 
