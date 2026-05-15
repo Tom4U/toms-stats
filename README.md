@@ -26,16 +26,20 @@ and custom events for your own websites and apps, without cookies and without re
 
 ## Features
 
-| Feature | Status |
-| --- | --- |
-| Page view tracking | Planned |
-| Unique visitor counting (cookie-free) | Planned |
-| Referrer / UTM tracking | Planned |
-| Browser / OS / device breakdown | Planned |
-| Custom events | Planned |
-| QR code manager | Planned |
-| Google Auth (single owner) | Planned |
-| SvelteKit dashboard | Planned |
+Feature status is derived from the spec acceptance criteria — see [`specs/`](specs/) for the full list and
+[`.spec-audit-allowlist.json`](.spec-audit-allowlist.json) for ACs that are deliberately pending.
+
+| Feature | Status | Spec |
+| --- | --- | --- |
+| `POST /api/event` tracking endpoint | Implemented | [01-tracking-api.md](specs/01-tracking-api.md) |
+| Cookie-free unique-visitor hashing (daily + hourly session) | Implemented | [01-tracking-api.md](specs/01-tracking-api.md) |
+| Referrer / UTM capture | Implemented | [01-tracking-api.md](specs/01-tracking-api.md) |
+| Browser / OS / device classification from User-Agent | Implemented | [01-tracking-api.md](specs/01-tracking-api.md) |
+| Custom events with key-value props (validation) | Implemented | [01-tracking-api.md](specs/01-tracking-api.md) |
+| Stats query API (read side) | Planned (AC-01-07/08/09) | [01-tracking-api.md](specs/01-tracking-api.md) |
+| SvelteKit dashboard | Scaffolded; features pending | [02-dashboard.md](specs/02-dashboard.md) |
+| QR code manager | Planned | [03-qr-codes.md](specs/03-qr-codes.md) |
+| Google Auth (single owner) | Planned | [04-auth.md](specs/04-auth.md) |
 
 ---
 
