@@ -4,10 +4,6 @@ on:
   pull_request:
     branches:
       - main
-    paths-ignore:
-      - '**.md'
-      - 'specs/**'
-      - 'LICENSE'
 
 concurrency:
   group: ci-${{ github.ref }}
