@@ -1,6 +1,6 @@
 # Changelog
 
-## [0.1.1](https://github.com/Tom4U/toms-stats/compare/monorepo-v0.1.0...monorepo-v0.1.1) (2026-05-15)
+## [0.1.1](https://github.com/Tom4U/toms-stats/compare/toms-stats-v0.1.0...toms-stats-v0.1.1) (2026-05-15)
 
 
 ### Bug Fixes
