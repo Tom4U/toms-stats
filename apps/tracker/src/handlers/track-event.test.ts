@@ -505,4 +505,56 @@ describe('handleTrackEvent', () => {
     const hashes = snap.docs.map(d => d.data()['visitorHash'] as string)
     expect(hashes[0]).toBe(hashes[1])
   })
+
+  // -------------------------------------------------------------------------
+  // AC-25: Non-http/https URL scheme → 400
+  // -------------------------------------------------------------------------
+  it('AC-25: ftp URL scheme returns 400 with error field', async () => {
+    const req = makeReq({
+      body: { siteId: SITE_ID, type: 'pageview', url: 'ftp://test.example.com/page' },
+      headers: { 'user-agent': TEST_UA },
+    })
+    const res = new MockResponse()
+
+    await handleTrackEvent(req, res)
+
+    expect(res.statusCode).toBe(400)
+    expect((res.body as { error: string }).error).toBeTruthy()
+  })
+
+  // -------------------------------------------------------------------------
+  // AC-26: Missing VISITOR_SALT → 500
+  // -------------------------------------------------------------------------
+  it('AC-26: empty salt returns 500 with error field', async () => {
+    const req = makeReq({
+      body: { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/' },
+      headers: { 'user-agent': TEST_UA },
+    })
+    const res = new MockResponse()
+
+    await handleTrackEvent(req, res, new Date(), '')
+
+    expect(res.statusCode).toBe(500)
+    expect((res.body as { error: string }).error).toBeTruthy()
+  })
+
+  // -------------------------------------------------------------------------
+  // AC-27: Unknown IP → unique per-request visitorHash
+  // -------------------------------------------------------------------------
+  it('AC-27: two requests with no determinable IP produce different visitorHashes', async () => {
+    const body = { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/' }
+    const noIpReq = {
+      method: 'POST' as const,
+      body,
+      headers: { 'user-agent': TEST_UA } as Record<string, string>,
+    }
+
+    await handleTrackEvent(noIpReq, new MockResponse(), DAY_A)
+    await handleTrackEvent(noIpReq, new MockResponse(), DAY_A)
+
+    const snap = await db.collection('events').get()
+    expect(snap.size).toBe(2)
+    const hashes = snap.docs.map(d => d.data()['visitorHash'] as string)
+    expect(hashes[0]).not.toBe(hashes[1])
+  })
 })

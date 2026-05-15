@@ -1,4 +1,4 @@
-import { createHash } from 'node:crypto'
+import { createHash, randomUUID } from 'node:crypto'
 import { getFirestore, FieldValue } from 'firebase-admin/firestore'
 import { onRequest } from 'firebase-functions/v2/https'
 import type { DeviceType, EventType } from '@tom4u-stats/shared'
@@ -109,18 +109,14 @@ interface UrlParts {
 }
 
 function extractUrlParts(rawUrl: string): UrlParts {
-  try {
-    const parsed = new URL(rawUrl)
-    const p = parsed.searchParams
+  const parsed = new URL(rawUrl)
+  const p = parsed.searchParams
 
-    return {
-      path: parsed.pathname,
-      utmSource: p.get('utm_source') ?? '',
-      utmMedium: p.get('utm_medium') ?? '',
-      utmCampaign: p.get('utm_campaign') ?? '',
-    }
-  } catch {
-    return { path: '/', utmSource: '', utmMedium: '', utmCampaign: '' }
+  return {
+    path: parsed.pathname,
+    utmSource: p.get('utm_source') ?? '',
+    utmMedium: p.get('utm_medium') ?? '',
+    utmCampaign: p.get('utm_campaign') ?? '',
   }
 }
 
@@ -139,7 +135,9 @@ function getClientIp(req: IncomingReq): string {
 
   if (fwd) return fwd.split(',')[0].trim()
 
-  return req.ip ?? '0.0.0.0'
+  // When no IP is determinable, mix in a random token so each anonymous
+  // request gets a unique hash instead of all aliasing to a single identity.
+  return req.ip ?? randomUUID()
 }
 
 // ---------------------------------------------------------------------------
@@ -214,10 +212,16 @@ function validateBody(body: unknown): ValidationResult {
     return { ok: false, error: 'url is required' }
   }
 
+  let parsedUrl: URL
+
   try {
-    new URL(url)
+    parsedUrl = new URL(url)
   } catch {
     return { ok: false, error: 'url must be a valid URL' }
+  }
+
+  if (parsedUrl.protocol !== 'http:' && parsedUrl.protocol !== 'https:') {
+    return { ok: false, error: 'url must use http or https scheme' }
   }
 
   let resolvedName = 'pageview'
@@ -261,7 +265,14 @@ export async function handleTrackEvent(
   req: IncomingReq,
   res: OutgoingRes,
   now: Date = new Date(),
+  salt: string = process.env['VISITOR_SALT'] ?? '',
 ): Promise<void> {
+  if (!salt) {
+    res.status(500).json({ error: 'Server misconfiguration: VISITOR_SALT is not set' })
+
+    return
+  }
+
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' })
 
@@ -286,7 +297,6 @@ export async function handleTrackEvent(
     return
   }
 
-  const salt = process.env['VISITOR_SALT'] ?? ''
   const ip = getClientIp(req)
   const ua = firstHeaderValue(req.headers['user-agent'])
 

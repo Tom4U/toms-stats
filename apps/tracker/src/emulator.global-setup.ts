@@ -1,5 +1,6 @@
 import { spawn, type ChildProcess } from 'node:child_process'
 import { createConnection } from 'node:net'
+import http from 'node:http'
 import path from 'node:path'
 
 const FIRESTORE_PORT = 8090
@@ -18,22 +19,37 @@ function checkPort(port: number): Promise<boolean> {
   })
 }
 
+// After the TCP port accepts connections the Firestore gRPC service may still
+// be initialising. Probe the HTTP endpoint so we only proceed once the server
+// actually responds (any status code counts — connection refused does not).
+function checkHttpReady(port: number): Promise<boolean> {
+  return new Promise(resolve => {
+    const req = http.get(`http://127.0.0.1:${port}/`, res => {
+      res.destroy()
+      resolve(true)
+    })
+    req.on('error', () => resolve(false))
+    req.setTimeout(500, () => { req.destroy(); resolve(false) })
+  })
+}
+
 async function waitForPort(port: number, timeoutMs = 30_000): Promise<void> {
   const deadline = Date.now() + timeoutMs
   while (Date.now() < deadline) {
-    if (await checkPort(port)) return
+    if (await checkPort(port) && await checkHttpReady(port)) return
     await new Promise<void>(r => setTimeout(r, 500))
   }
   throw new Error(`Firestore emulator not ready after ${timeoutMs}ms`)
 }
 
-async function waitForPortClosed(port: number, timeoutMs = 10_000): Promise<void> {
+// Returns true if the port closed within the timeout, false if it lingered.
+async function waitForPortClosed(port: number, timeoutMs = 10_000): Promise<boolean> {
   const deadline = Date.now() + timeoutMs
   while (Date.now() < deadline) {
-    if (!(await checkPort(port))) return
+    if (!(await checkPort(port))) return true
     await new Promise<void>(r => setTimeout(r, 500))
   }
-  // Best-effort: don't throw if port lingers briefly
+  return false
 }
 
 // ---------------------------------------------------------------------------
@@ -63,13 +79,13 @@ function killTree(pid: number): Promise<void> {
 
 function spawnEmulator(projectRoot: string): ChildProcess {
   if (process.platform === 'win32') {
-    // Pass a single command string so Node.js does not trigger DEP0190
-    // (the deprecation for passing an args array with shell:true).
-    // The shell parses arguments itself, and cmd.exe's PID is what we get,
-    // which taskkill /T can use to kill the whole descendent tree.
+    // Use cmd.exe with explicit args so argument boundaries are unambiguous
+    // and no shell metacharacter expansion can occur. All inputs are
+    // hardcoded constants — no user data involved.
     return spawn(
-      'npx firebase emulators:start --only firestore --project toms-stats',
-      { cwd: projectRoot, shell: true, stdio: 'ignore' },
+      'cmd.exe',
+      ['/c', 'npx', 'firebase', 'emulators:start', '--only', 'firestore', '--project', 'toms-stats'],
+      { cwd: projectRoot, stdio: 'ignore' },
     )
   }
   // Unix: shell:false + detached:true puts the child in its own process group,
@@ -110,5 +126,16 @@ export async function teardown(): Promise<void> {
   managedPid = null
 
   await killTree(pid)
-  await waitForPortClosed(FIRESTORE_PORT)
+
+  const closed = await waitForPortClosed(FIRESTORE_PORT)
+
+  // Java emulator sometimes ignores SIGTERM; escalate to SIGKILL so the port
+  // is not left open for the next CI run.
+  if (!closed && process.platform !== 'win32') {
+    try {
+      process.kill(-pid, 'SIGKILL')
+    } catch {
+      // Process may already be gone between the check and the kill
+    }
+  }
 }

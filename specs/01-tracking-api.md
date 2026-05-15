@@ -351,6 +351,26 @@ Auth-protected. Returns all registered sites.
 **Then** the visitorHash matches the hash computed from `req.ip`
 (i.e., two identical requests both using `req.ip` produce the same hash).
 
+### AC-25: Non-http/https URL scheme → 400
+
+**Given** a POST with a `url` whose scheme is not `http` or `https` (e.g. `ftp://example.com/page`)
+**When** the function validates the payload
+**Then** it returns HTTP 400 with a descriptive `error` field.
+
+### AC-26: Missing VISITOR_SALT → 500
+
+**Given** the `VISITOR_SALT` environment variable is empty or not set
+**When** the function receives any POST request
+**Then** it returns HTTP 500 with a descriptive `error` field
+(fail-fast: without a real salt, the privacy guarantee of AC-02/03/04 cannot be upheld).
+
+### AC-27: Unknown IP → unique per-request visitorHash
+
+**Given** two POST requests where neither `X-Forwarded-For` nor `req.ip` can be determined
+**When** both requests are processed
+**Then** the two event documents have **different** `visitorHash` values
+(a random per-request token is mixed in so unknown-IP visitors do not share a single identity).
+
 ### AC-07: Stats endpoint requires auth
 
 **Given** a GET to `/api/stats` without an Authorization header
