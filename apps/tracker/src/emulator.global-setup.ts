@@ -1,0 +1,114 @@
+import { spawn, type ChildProcess } from 'node:child_process'
+import { createConnection } from 'node:net'
+import path from 'node:path'
+
+const FIRESTORE_PORT = 8090
+
+// ---------------------------------------------------------------------------
+// Port helpers
+// ---------------------------------------------------------------------------
+
+function checkPort(port: number): Promise<boolean> {
+  return new Promise(resolve => {
+    const socket = createConnection({ port, host: '127.0.0.1' })
+    socket.setTimeout(500)
+    socket.once('connect', () => { socket.destroy(); resolve(true) })
+    socket.once('timeout', () => { socket.destroy(); resolve(false) })
+    socket.once('error', () => resolve(false))
+  })
+}
+
+async function waitForPort(port: number, timeoutMs = 30_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    if (await checkPort(port)) return
+    await new Promise<void>(r => setTimeout(r, 500))
+  }
+  throw new Error(`Firestore emulator not ready after ${timeoutMs}ms`)
+}
+
+async function waitForPortClosed(port: number, timeoutMs = 10_000): Promise<void> {
+  const deadline = Date.now() + timeoutMs
+  while (Date.now() < deadline) {
+    if (!(await checkPort(port))) return
+    await new Promise<void>(r => setTimeout(r, 500))
+  }
+  // Best-effort: don't throw if port lingers briefly
+}
+
+// ---------------------------------------------------------------------------
+// Process-tree kill (cross-platform)
+// ---------------------------------------------------------------------------
+
+function killTree(pid: number): Promise<void> {
+  return new Promise(resolve => {
+    if (process.platform === 'win32') {
+      // /F = force, /T = tree (all descendants)
+      const t = spawn('taskkill', ['/F', '/T', '/PID', String(pid)], { stdio: 'ignore' })
+      t.once('close', () => resolve())
+    } else {
+      try {
+        process.kill(-pid, 'SIGTERM') // negative PID targets the process group
+      } catch {
+        // Process may already be gone
+      }
+      resolve()
+    }
+  })
+}
+
+// ---------------------------------------------------------------------------
+// Spawn helper (platform-aware)
+// ---------------------------------------------------------------------------
+
+function spawnEmulator(projectRoot: string): ChildProcess {
+  if (process.platform === 'win32') {
+    // Pass a single command string so Node.js does not trigger DEP0190
+    // (the deprecation for passing an args array with shell:true).
+    // The shell parses arguments itself, and cmd.exe's PID is what we get,
+    // which taskkill /T can use to kill the whole descendent tree.
+    return spawn(
+      'npx firebase emulators:start --only firestore --project toms-stats',
+      { cwd: projectRoot, shell: true, stdio: 'ignore' },
+    )
+  }
+  // Unix: shell:false + detached:true puts the child in its own process group,
+  // letting kill(-pid) terminate all descendants at once.
+  return spawn(
+    'npx',
+    ['firebase', 'emulators:start', '--only', 'firestore', '--project', 'toms-stats'],
+    { cwd: projectRoot, stdio: 'ignore', detached: true },
+  )
+}
+
+// ---------------------------------------------------------------------------
+// Setup / teardown
+// ---------------------------------------------------------------------------
+
+let managedPid: number | null = null
+
+export async function setup(): Promise<void> {
+  if (await checkPort(FIRESTORE_PORT)) return // already running (dev mode)
+
+  // Walk up two levels: apps/tracker → apps → project root
+  const projectRoot = path.resolve(process.cwd(), '../..')
+
+  const child = spawnEmulator(projectRoot)
+  // unref() so the child does not keep the vitest process alive if teardown is skipped
+  child.unref()
+
+  if (child.pid === undefined) throw new Error('Failed to spawn Firebase emulator')
+  managedPid = child.pid
+
+  await waitForPort(FIRESTORE_PORT)
+}
+
+export async function teardown(): Promise<void> {
+  if (managedPid === null) return
+
+  const pid = managedPid
+  managedPid = null
+
+  await killTree(pid)
+  await waitForPortClosed(FIRESTORE_PORT)
+}
