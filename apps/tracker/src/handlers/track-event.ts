@@ -12,7 +12,7 @@ interface IncomingReq {
   method: string
   body: unknown
   headers: Readonly<Record<string, string | string[] | undefined>>
-  ip?: string | undefined
+  ip?: string
 }
 
 interface OutgoingRes {
@@ -32,11 +32,13 @@ function sha256(input: string): string {
 
 export function computeVisitorHash(ip: string, ua: string, salt: string, now: Date): string {
   const day = now.toISOString().slice(0, 10) // YYYY-MM-DD
+
   return sha256(ip + ua + day + salt)
 }
 
 export function computeSessionHash(ip: string, ua: string, salt: string, now: Date): string {
   const hour = now.toISOString().slice(0, 13) // YYYY-MM-DDTHH
+
   return sha256(ip + ua + hour + salt)
 }
 
@@ -54,13 +56,13 @@ interface ParsedUA {
 export function parseUserAgent(ua: string): ParsedUA {
   // Device — tablet must be checked before mobile
   let device: DeviceType = 'desktop'
-  if (/tablet|ipad/i.test(ua)) {
+
+  if (/tablet|ipad/i.test(ua))
     device = 'tablet'
-  } else if (/mobile|android|iphone|ipod|windows phone/i.test(ua)) {
+  else if (/mobile|android|iphone|ipod|windows phone/i.test(ua))
     device = 'mobile'
-  } else if (!/mozilla|chrome|safari|firefox|edge|opera/i.test(ua)) {
+  else if (!/mozilla|chrome|safari|firefox|edge|opera/i.test(ua))
     device = 'unknown'
-  }
 
   // OS
   let os = 'Unknown'
@@ -75,17 +77,18 @@ export function parseUserAgent(ua: string): ParsedUA {
   let browserVersion = ''
 
   const matchers: Array<[RegExp, string]> = [
-    [/Edg(?:e|)\/([\d]+)/, 'Edge'],
-    [/OPR\/([\d]+)/, 'Opera'],
-    [/Firefox\/([\d]+)/, 'Firefox'],
-    [/Chrome\/([\d]+)/, 'Chrome'],
-    [/Version\/([\d]+)[^)]*Safari/, 'Safari'],
+    [/Edg(?:e|)\/(\d+)/, 'Edge'],
+    [/OPR\/(\d+)/, 'Opera'],
+    [/Firefox\/(\d+)/, 'Firefox'],
+    [/Chrome\/(\d+)/, 'Chrome'],
+    [/Version\/(\d+)(?:\.\d+)*\sSafari/, 'Safari'],
   ]
 
-  for (const [re, name] of matchers) {
-    const m = ua.match(re)
+  for (const matcher of matchers) {
+    const m = matcher[0].exec(ua)
+
     if (m) {
-      browser = name
+      browser = matcher[1]
       browserVersion = m[1] ?? ''
       break
     }
@@ -109,6 +112,7 @@ function extractUrlParts(rawUrl: string): UrlParts {
   try {
     const parsed = new URL(rawUrl)
     const p = parsed.searchParams
+
     return {
       path: parsed.pathname,
       utmSource: p.get('utm_source') ?? '',
@@ -126,12 +130,15 @@ function extractUrlParts(rawUrl: string): UrlParts {
 
 function firstHeaderValue(value: string | string[] | undefined): string {
   if (!value) return ''
+
   return Array.isArray(value) ? (value[0] ?? '') : value
 }
 
 function getClientIp(req: IncomingReq): string {
   const fwd = firstHeaderValue(req.headers['x-forwarded-for'])
-  if (fwd) return fwd.split(',')[0]!.trim()
+
+  if (fwd) return fwd.split(',')[0].trim()
+
   return req.ip ?? '0.0.0.0'
 }
 
@@ -150,57 +157,96 @@ interface ValidPayload {
 
 type ValidationResult = { ok: true; payload: ValidPayload } | { ok: false; error: string }
 
+function isRecord(v: unknown): v is Record<string, unknown> {
+  return typeof v === 'object' && v !== null && !Array.isArray(v)
+}
+
+function isEventType(v: unknown): v is EventType {
+  return v === 'pageview' || v === 'custom'
+}
+
+type PropsResult = { ok: true; value: Record<string, string> } | { ok: false; error: string }
+
+function validateProps(raw: unknown): PropsResult {
+  if (!isRecord(raw))
+    return { ok: false, error: 'props must be an object' }
+
+  const entries = Object.entries(raw)
+
+  if (entries.length > 10)
+    return { ok: false, error: 'props must have at most 10 keys' }
+
+  const result: Record<string, string> = {}
+
+  for (const entry of entries) {
+    const k = entry[0]
+    const v = entry[1]
+
+    if (k.length > 100)
+      return { ok: false, error: 'prop key exceeds 100 characters' }
+
+    if (typeof v !== 'string' || v.length > 100) {
+      return { ok: false, error: `prop value for "${k}" must be a string of at most 100 characters` }
+    }
+
+    result[k] = v
+  }
+
+  return { ok: true, value: result }
+}
+
 function validateBody(body: unknown): ValidationResult {
-  if (!body || typeof body !== 'object' || Array.isArray(body)) {
+  if (!isRecord(body)) {
     return { ok: false, error: 'Request body must be a JSON object' }
   }
 
-  const b = body as Record<string, unknown>
-  const { siteId, type, url, name, referrer, props } = b
+  const { siteId, type, url, name, referrer, props } = body
 
   if (typeof siteId !== 'string' || siteId === '') {
     return { ok: false, error: 'siteId is required' }
   }
-  if (type !== 'pageview' && type !== 'custom') {
+
+  if (!isEventType(type)) {
     return { ok: false, error: 'type must be "pageview" or "custom"' }
   }
+
   if (typeof url !== 'string' || url === '') {
     return { ok: false, error: 'url is required' }
   }
+
   try {
     new URL(url)
   } catch {
     return { ok: false, error: 'url must be a valid URL' }
   }
-  if (type === 'custom' && (typeof name !== 'string' || name === '')) {
-    return { ok: false, error: 'name is required for custom events' }
+
+  let resolvedName = 'pageview'
+
+  if (type !== 'pageview') {
+    if (typeof name !== 'string' || name === '') {
+      return { ok: false, error: 'name is required for custom events' }
+    }
+
+    resolvedName = name
   }
 
-  const resolvedProps: Record<string, string> = {}
-  if (props !== undefined && props !== null) {
-    if (typeof props !== 'object' || Array.isArray(props)) {
-      return { ok: false, error: 'props must be an object' }
-    }
-    const entries = Object.entries(props as Record<string, unknown>)
-    if (entries.length > 10) {
-      return { ok: false, error: 'props must have at most 10 keys' }
-    }
-    for (const [k, v] of entries) {
-      if (k.length > 100) return { ok: false, error: 'prop key exceeds 100 characters' }
-      if (typeof v !== 'string' || v.length > 100) {
-        return { ok: false, error: `prop value for "${k}" must be a string of at most 100 characters` }
-      }
-      resolvedProps[k] = v
-    }
+  let resolvedProps: Record<string, string> = {}
+
+  if (props != null) {
+    const propsResult = validateProps(props)
+
+    if (!propsResult.ok) return { ok: false, error: propsResult.error }
+
+    resolvedProps = propsResult.value
   }
 
   return {
     ok: true,
     payload: {
       siteId,
-      type: type as EventType,
+      type,
       url,
-      name: type === 'pageview' ? 'pageview' : (name as string),
+      name: resolvedName,
       referrer: typeof referrer === 'string' ? referrer : '',
       props: resolvedProps,
     },
@@ -218,21 +264,25 @@ export async function handleTrackEvent(
 ): Promise<void> {
   if (req.method !== 'POST') {
     res.status(405).json({ error: 'Method not allowed' })
+
     return
   }
 
   const validation = validateBody(req.body)
+
   if (!validation.ok) {
     res.status(400).json({ error: validation.error })
+
     return
   }
 
   const { siteId, type, name, url, referrer, props } = validation.payload
   const db = getFirestore()
-
   const siteSnap = await db.collection('sites').doc(siteId).get()
+
   if (!siteSnap.exists) {
     res.status(404).json({ error: `Site "${siteId}" not found` })
+
     return
   }
 

@@ -6,6 +6,7 @@
   "scripts": {
     "build": "tsc",
     "build:watch": "tsc --watch",
+    "lint": "eslint src",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
     "test:watch": "vitest"
@@ -25,6 +26,7 @@
     "vite": "^8.0.12",
     "vitest": "^4.1.6"
   },
+  "type": "module",
   "engines": {
     "node": "24"
   }
