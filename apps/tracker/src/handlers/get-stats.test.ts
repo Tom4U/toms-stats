@@ -432,6 +432,47 @@ describe('handleGetStats', () => {
     expect(body.totals.visitors).toBe(0)
   })
 
+  // -------------------------------------------------------------------------
+  // Copilot-review fixes: 405, malformed referrer, invalid calendar date
+  // -------------------------------------------------------------------------
+  it('returns 405 for non-GET requests', async () => {
+    const req = makeReq({ method: 'POST', query: VALID_QUERY, headers: { authorization: 'Bearer __test_uid__' } })
+    const res = new MockResponse()
+
+    await handleGetStats(req, res, mockVerifyToken)
+
+    expect(res.statusCode).toBe(405)
+  })
+
+  it('falls back to "direct" for a malformed referrer URL', async () => {
+    await seedEvent({ referrer: 'not-a-url', timestamp: Timestamp.fromDate(new Date(`${DATE}T10:00:00Z`)) })
+
+    const req = makeReq({
+      query: { siteId: SITE_ID, from: DATE, to: DATE, metric: 'referrers' },
+      headers: { authorization: 'Bearer __test_uid__' },
+    })
+    const res = new MockResponse()
+
+    await handleGetStats(req, res, mockVerifyToken)
+
+    expect(res.statusCode).toBe(200)
+    const body = res.body as { data: Array<{ label: string; count: number }> }
+    expect(body.data.find(d => d.label === 'direct')?.count).toBe(1)
+  })
+
+  it('returns 400 for a from date that passes regex but is not a valid calendar date', async () => {
+    const req = makeReq({
+      query: { siteId: SITE_ID, from: '2024-13-40', to: DATE, metric: 'pageviews' },
+      headers: { authorization: 'Bearer __test_uid__' },
+    })
+    const res = new MockResponse()
+
+    await handleGetStats(req, res, mockVerifyToken)
+
+    expect(res.statusCode).toBe(400)
+    expect((res.body as { error: string }).error).toMatch(/from must be a date/)
+  })
+
   it('correctly counts pageviews seeded with a plain JS Date timestamp', async () => {
     // Seeds via a JS Date object (not Timestamp.fromDate) to exercise the
     // `instanceof Date` branch in toIsoDate

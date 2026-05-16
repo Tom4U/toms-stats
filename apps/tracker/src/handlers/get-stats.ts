@@ -104,8 +104,8 @@ function validateParams(query: Record<string, unknown>): ParamResult {
   const metric = firstString(query['metric'])
 
   if (!siteId) return { ok: false, error: 'siteId is required' }
-  if (!from || !/^\d{4}-\d{2}-\d{2}$/.test(from)) return { ok: false, error: 'from must be a date in YYYY-MM-DD format' }
-  if (!to || !/^\d{4}-\d{2}-\d{2}$/.test(to)) return { ok: false, error: 'to must be a date in YYYY-MM-DD format' }
+  if (!from || !/^\d{4}-\d{2}-\d{2}$/.test(from) || Number.isNaN(Date.parse(from))) return { ok: false, error: 'from must be a date in YYYY-MM-DD format' }
+  if (!to || !/^\d{4}-\d{2}-\d{2}$/.test(to) || Number.isNaN(Date.parse(to))) return { ok: false, error: 'to must be a date in YYYY-MM-DD format' }
   if (to < from) return { ok: false, error: 'to must be >= from' }
   if (daysBetween(from, to) > 366) return { ok: false, error: 'date range must not exceed 366 days' }
   if (!VALID_METRICS.has(metric)) return { ok: false, error: `metric must be one of: ${[...VALID_METRICS].join(', ')}` }
@@ -185,7 +185,15 @@ function buildLabelCountResponse(
         label = ev.visitorHash
         break
       case 'referrers':
-        label = ev.referrer ? new URL(ev.referrer).hostname : 'direct'
+        if (ev.referrer) {
+          try {
+            label = new URL(ev.referrer).hostname
+          } catch {
+            label = 'direct'
+          }
+        } else {
+          label = 'direct'
+        }
         break
       case 'browsers':
         label = ev.browser
@@ -226,6 +234,11 @@ export async function handleGetStats(
   res: OutgoingRes,
   verifyToken: TokenVerifier = defaultVerifyToken,
 ): Promise<void> {
+  if (req.method !== 'GET') {
+    res.status(405).send('Method Not Allowed')
+    return
+  }
+
   // Auth
   const authHeader = firstHeaderValue(req.headers['authorization'])
   if (!authHeader.startsWith('Bearer ')) {
