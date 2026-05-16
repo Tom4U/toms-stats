@@ -155,6 +155,9 @@ Tests MUST use the local emulators. Never call real Firestore or Firebase Auth i
   (`gh pr edit --body ...`). Lint/refactor pushes do not require updates.
 - Mark ready when complete (`gh pr ready <nr>`); CI must be green before merge.
 - After every push, wait for all CI workflow runs to complete before continuing.
+- **Test plan checkboxes must reflect reality**: tick `[x]` for every item that is already done at
+  the time of writing. After CI completes successfully, update the PR body via `gh pr edit` to tick
+  any CI-gated boxes (e.g. `` `npm test` passes ``, `CI green`). Never leave a done item as `[ ]`.
 - Every PR references the spec acceptance criterion it fulfils (e.g. `Closes AC-01-03`).
 - No direct pushes to `main`.
 - Version bumps are owned by release-please — **do not** edit `version` fields manually.
