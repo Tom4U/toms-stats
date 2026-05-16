@@ -24,8 +24,10 @@ project-specific delta.
 
 ## Architecture
 
-`site → JS snippet → POST /api/event → CF tracker (no raw IP) → Firestore → CF stats API
-(auth) → SvelteKit dashboard (Firebase Auth/Google) → Firebase Hosting`
+```text
+site → JS snippet → POST /api/event → CF tracker (no raw IP) → Firestore →
+CF stats API (auth) → SvelteKit dashboard (Firebase Auth/Google) → Firebase Hosting
+```
 
 ## Stack
 
@@ -58,12 +60,24 @@ story before page wiring.
 ## Commands
 
 ```bash
-npm install | npm test | npm run build | npm run check     # root, all workspaces
+npm install
+npm test
+npm run build
+npm run check     # root, all workspaces
 npx firebase emulators:start                                # required for integration tests
 npx firebase emulators:exec "npm test"
-npm -w apps/tracker run build|test|test:watch
-npm -w apps/dashboard run dev|build|test:unit|test:e2e|check|lint|format
-npm -w apps/dashboard run storybook|build-storybook
+npm -w apps/tracker run build
+npm -w apps/tracker run test
+npm -w apps/tracker run test:watch
+npm -w apps/dashboard run dev
+npm -w apps/dashboard run build
+npm -w apps/dashboard run test:unit
+npm -w apps/dashboard run test:e2e
+npm -w apps/dashboard run check
+npm -w apps/dashboard run lint
+npm -w apps/dashboard run format
+npm -w apps/dashboard run storybook
+npm -w apps/dashboard run build-storybook
 ```
 
 Pre-commit hooks: `husky` (via root `prepare`), `lint-staged` (ESLint+markdownlint),
@@ -91,9 +105,9 @@ Full schema → `specs/01-tracking-api.md`.
 | `SONAR_TOKEN` | GH secret (ci.yml) | SonarCloud → Account → Security → Tokens |
 
 `npm-publish.yml` uses npm Trusted Publishing (OIDC, no secret).
-One-time Firebase setup: `firebase login` → `projects:create toms-stats` → `use toms-stats`
-→ Console enable Firestore(Native)/Auth(Google)/Hosting/Functions(Blaze) →
-`firebase functions:secrets:set VISITOR_SALT`.
+One-time Firebase setup: `npx firebase login` → `npx firebase projects:create toms-stats` →
+`npx firebase use toms-stats` → Console enable Firestore(Native)/Auth(Google)/Hosting/Functions(Blaze) →
+`npx firebase functions:secrets:set VISITOR_SALT`.
 
 ## Naming
 
