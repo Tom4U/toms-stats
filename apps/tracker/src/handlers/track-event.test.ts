@@ -75,7 +75,7 @@ describe('handleTrackEvent', () => {
   })
 
   beforeEach(async () => {
-    const snap = await db.collection('events').get()
+    const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
     if (snap.size > 0) {
       const batch = db.batch()
       snap.docs.forEach(doc => batch.delete(doc.ref))
@@ -104,7 +104,7 @@ describe('handleTrackEvent', () => {
 
     expect(res.statusCode).toBe(204)
 
-    const snap = await db.collection('events').get()
+    const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
     expect(snap.size).toBe(1)
 
     const data = snap.docs[0]!.data()
@@ -137,7 +137,7 @@ describe('handleTrackEvent', () => {
 
     await handleTrackEvent(req, res, DAY_A)
 
-    const snap = await db.collection('events').get()
+    const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
     const data = snap.docs[0]!.data()
 
     expect(data['ip']).toBeUndefined()
@@ -157,7 +157,7 @@ describe('handleTrackEvent', () => {
     await handleTrackEvent(makeReq({ body, headers }), new MockResponse(), DAY_A)
     await handleTrackEvent(makeReq({ body, headers }), new MockResponse(), DAY_A)
 
-    const snap = await db.collection('events').get()
+    const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
     expect(snap.size).toBe(2)
 
     const hashes = snap.docs.map(d => d.data()['visitorHash'] as string)
@@ -174,7 +174,7 @@ describe('handleTrackEvent', () => {
     await handleTrackEvent(makeReq({ body, headers }), new MockResponse(), DAY_A)
     await handleTrackEvent(makeReq({ body, headers }), new MockResponse(), DAY_B)
 
-    const snap = await db.collection('events').get()
+    const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
     const hashes = snap.docs.map(d => d.data()['visitorHash'] as string)
     expect(hashes[0]).not.toBe(hashes[1])
   })
@@ -309,7 +309,7 @@ describe('handleTrackEvent', () => {
     await handleTrackEvent(req, res, DAY_A)
 
     expect(res.statusCode).toBe(204)
-    const snap = await db.collection('events').get()
+    const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
     expect(snap.size).toBe(1)
     const data = snap.docs[0]!.data()
     expect(data['type']).toBe('custom')
@@ -389,7 +389,7 @@ describe('handleTrackEvent', () => {
     await handleTrackEvent(makeReq({ body, headers }), new MockResponse(), DAY_A)
     await handleTrackEvent(makeReq({ body, headers }), new MockResponse(), HOUR_A_SAME)
 
-    const snap = await db.collection('events').get()
+    const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
     expect(snap.size).toBe(2)
     const hashes = snap.docs.map(d => d.data()['sessionHash'] as string)
     expect(hashes[0]).toBe(hashes[1])
@@ -403,7 +403,7 @@ describe('handleTrackEvent', () => {
     await handleTrackEvent(makeReq({ body, headers }), new MockResponse(), DAY_A)
     await handleTrackEvent(makeReq({ body, headers }), new MockResponse(), NEXT_HOUR)
 
-    const snap = await db.collection('events').get()
+    const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
     const hashes = snap.docs.map(d => d.data()['sessionHash'] as string)
     expect(hashes[0]).not.toBe(hashes[1])
   })
@@ -423,7 +423,7 @@ describe('handleTrackEvent', () => {
 
     await handleTrackEvent(req, res, DAY_A)
 
-    const snap = await db.collection('events').get()
+    const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
     expect(snap.docs[0]!.data()['device']).toBe('mobile')
   })
 
@@ -442,7 +442,7 @@ describe('handleTrackEvent', () => {
 
     await handleTrackEvent(req, res, DAY_A)
 
-    const snap = await db.collection('events').get()
+    const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
     expect(snap.docs[0]!.data()['device']).toBe('tablet')
   })
 
@@ -460,7 +460,7 @@ describe('handleTrackEvent', () => {
 
     await handleTrackEvent(req, res, DAY_A)
 
-    const snap = await db.collection('events').get()
+    const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
     expect(snap.docs[0]!.data()['browser']).toBe('Firefox')
   })
 
@@ -479,7 +479,7 @@ describe('handleTrackEvent', () => {
 
     await handleTrackEvent(req, res, DAY_A)
 
-    const snap = await db.collection('events').get()
+    const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
     expect(snap.docs[0]!.data()['os']).toBe('macOS')
   })
 
@@ -500,7 +500,7 @@ describe('handleTrackEvent', () => {
       DAY_A,
     )
 
-    const snap = await db.collection('events').get()
+    const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
     expect(snap.size).toBe(2)
     const hashes = snap.docs.map(d => d.data()['visitorHash'] as string)
     expect(hashes[0]).toBe(hashes[1])
@@ -552,7 +552,7 @@ describe('handleTrackEvent', () => {
     await handleTrackEvent(noIpReq, new MockResponse(), DAY_A)
     await handleTrackEvent(noIpReq, new MockResponse(), DAY_A)
 
-    const snap = await db.collection('events').get()
+    const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
     expect(snap.size).toBe(2)
     const hashes = snap.docs.map(d => d.data()['visitorHash'] as string)
     expect(hashes[0]).not.toBe(hashes[1])
