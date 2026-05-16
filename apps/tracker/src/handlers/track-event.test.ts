@@ -107,7 +107,7 @@ describe('handleTrackEvent', () => {
     const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
     expect(snap.size).toBe(1)
 
-    const data = snap.docs[0]!.data()
+    const data = snap.docs[0].data()
     expect(data['siteId']).toBe(SITE_ID)
     expect(data['type']).toBe('pageview')
     expect(data['name']).toBe('pageview')
@@ -138,7 +138,7 @@ describe('handleTrackEvent', () => {
     await handleTrackEvent(req, res, DAY_A)
 
     const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
-    const data = snap.docs[0]!.data()
+    const data = snap.docs[0].data()
 
     expect(data['ip']).toBeUndefined()
     expect(data['ipAddress']).toBeUndefined()
@@ -311,7 +311,7 @@ describe('handleTrackEvent', () => {
     expect(res.statusCode).toBe(204)
     const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
     expect(snap.size).toBe(1)
-    const data = snap.docs[0]!.data()
+    const data = snap.docs[0].data()
     expect(data['type']).toBe('custom')
     expect(data['name']).toBe('signup_click')
     expect(data['props']).toEqual({ plan: 'pro' })
@@ -424,7 +424,7 @@ describe('handleTrackEvent', () => {
     await handleTrackEvent(req, res, DAY_A)
 
     const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
-    expect(snap.docs[0]!.data()['device']).toBe('mobile')
+    expect(snap.docs[0].data()['device']).toBe('mobile')
   })
 
   // -------------------------------------------------------------------------
@@ -443,7 +443,7 @@ describe('handleTrackEvent', () => {
     await handleTrackEvent(req, res, DAY_A)
 
     const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
-    expect(snap.docs[0]!.data()['device']).toBe('tablet')
+    expect(snap.docs[0].data()['device']).toBe('tablet')
   })
 
   // -------------------------------------------------------------------------
@@ -461,7 +461,7 @@ describe('handleTrackEvent', () => {
     await handleTrackEvent(req, res, DAY_A)
 
     const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
-    expect(snap.docs[0]!.data()['browser']).toBe('Firefox')
+    expect(snap.docs[0].data()['browser']).toBe('Firefox')
   })
 
   // -------------------------------------------------------------------------
@@ -480,7 +480,7 @@ describe('handleTrackEvent', () => {
     await handleTrackEvent(req, res, DAY_A)
 
     const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
-    expect(snap.docs[0]!.data()['os']).toBe('macOS')
+    expect(snap.docs[0].data()['os']).toBe('macOS')
   })
 
   // -------------------------------------------------------------------------
@@ -556,5 +556,61 @@ describe('handleTrackEvent', () => {
     expect(snap.size).toBe(2)
     const hashes = snap.docs.map(d => d.data()['visitorHash'] as string)
     expect(hashes[0]).not.toBe(hashes[1])
+  })
+
+  // -------------------------------------------------------------------------
+  // Additional branch coverage
+  // -------------------------------------------------------------------------
+  it('Linux User-Agent produces os "Linux"', async () => {
+    const linuxUa =
+      'Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/537.36 ' +
+      '(KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36'
+    const req = makeReq({
+      body: { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/' },
+      headers: { 'x-forwarded-for': TEST_IP, 'user-agent': linuxUa },
+    })
+    const res = new MockResponse()
+
+    await handleTrackEvent(req, res, DAY_A)
+
+    const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
+    expect(snap.docs[0].data()['os']).toBe('Linux')
+  })
+
+  it('unknown User-Agent (no browser keywords) produces device "unknown"', async () => {
+    const botUa = 'Googlebot/2.1 (+http://www.google.com/bot.html)'
+    const req = makeReq({
+      body: { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/' },
+      headers: { 'x-forwarded-for': TEST_IP, 'user-agent': botUa },
+    })
+    const res = new MockResponse()
+
+    await handleTrackEvent(req, res, DAY_A)
+
+    const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
+    expect(snap.docs[0].data()['device']).toBe('unknown')
+  })
+
+  it('non-object body returns 400 with error field', async () => {
+    const req = makeReq({ body: 'not an object', headers: { 'user-agent': TEST_UA } })
+    const res = new MockResponse()
+
+    await handleTrackEvent(req, res)
+
+    expect(res.statusCode).toBe(400)
+    expect((res.body as { error: string }).error).toBeTruthy()
+  })
+
+  it('props as non-object value returns 400 with error field', async () => {
+    const req = makeReq({
+      body: { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/', props: 'bad' },
+      headers: { 'user-agent': TEST_UA },
+    })
+    const res = new MockResponse()
+
+    await handleTrackEvent(req, res)
+
+    expect(res.statusCode).toBe(400)
+    expect((res.body as { error: string }).error).toBeTruthy()
   })
 })

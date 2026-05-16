@@ -240,6 +240,234 @@ describe('handleGetStats', () => {
     expect(res.statusCode).toBe(400)
     expect((res.body as { error: string }).error).toBeTruthy()
   })
+
+  it('returns 400 when from date is malformed', async () => {
+    const req = makeReq({
+      query: { siteId: SITE_ID, from: 'not-a-date', to: DATE, metric: 'pageviews' },
+      headers: { authorization: 'Bearer __test_uid__' },
+    })
+    const res = new MockResponse()
+
+    await handleGetStats(req, res, mockVerifyToken)
+
+    expect(res.statusCode).toBe(400)
+    expect((res.body as { error: string }).error).toBeTruthy()
+  })
+
+  it('returns 400 when to is before from', async () => {
+    const req = makeReq({
+      query: { siteId: SITE_ID, from: '2024-03-20', to: '2024-03-10', metric: 'pageviews' },
+      headers: { authorization: 'Bearer __test_uid__' },
+    })
+    const res = new MockResponse()
+
+    await handleGetStats(req, res, mockVerifyToken)
+
+    expect(res.statusCode).toBe(400)
+    expect((res.body as { error: string }).error).toBeTruthy()
+  })
+
+  // -------------------------------------------------------------------------
+  // Label-count metrics (browsers, os, devices, countries, referrers, visitors,
+  // customEvents) — covers buildLabelCountResponse branches
+  // -------------------------------------------------------------------------
+  it('returns browser distribution for metric=browsers', async () => {
+    await seedEvent({ browser: 'Chrome', timestamp: Timestamp.fromDate(new Date(`${DATE}T10:00:00Z`)) })
+    await seedEvent({ browser: 'Firefox', timestamp: Timestamp.fromDate(new Date(`${DATE}T10:01:00Z`)) })
+    await seedEvent({ browser: 'Chrome', timestamp: Timestamp.fromDate(new Date(`${DATE}T10:02:00Z`)) })
+
+    const req = makeReq({
+      query: { siteId: SITE_ID, from: DATE, to: DATE, metric: 'browsers' },
+      headers: { authorization: 'Bearer __test_uid__' },
+    })
+    const res = new MockResponse()
+
+    await handleGetStats(req, res, mockVerifyToken)
+
+    expect(res.statusCode).toBe(200)
+    const body = res.body as { metric: string; data: Array<{ label: string; count: number }> }
+    expect(body.metric).toBe('browsers')
+    const chrome = body.data.find(d => d.label === 'Chrome')
+    expect(chrome?.count).toBe(2)
+  })
+
+  it('returns OS distribution for metric=os', async () => {
+    await seedEvent({ os: 'Windows', timestamp: Timestamp.fromDate(new Date(`${DATE}T10:00:00Z`)) })
+    await seedEvent({ os: 'macOS', timestamp: Timestamp.fromDate(new Date(`${DATE}T10:01:00Z`)) })
+
+    const req = makeReq({
+      query: { siteId: SITE_ID, from: DATE, to: DATE, metric: 'os' },
+      headers: { authorization: 'Bearer __test_uid__' },
+    })
+    const res = new MockResponse()
+
+    await handleGetStats(req, res, mockVerifyToken)
+
+    expect(res.statusCode).toBe(200)
+    const body = res.body as { metric: string; data: Array<{ label: string; count: number }> }
+    expect(body.metric).toBe('os')
+    expect(body.data.length).toBeGreaterThan(0)
+  })
+
+  it('returns device distribution for metric=devices', async () => {
+    await seedEvent({ device: 'desktop', timestamp: Timestamp.fromDate(new Date(`${DATE}T10:00:00Z`)) })
+    await seedEvent({ device: 'mobile', timestamp: Timestamp.fromDate(new Date(`${DATE}T10:01:00Z`)) })
+
+    const req = makeReq({
+      query: { siteId: SITE_ID, from: DATE, to: DATE, metric: 'devices' },
+      headers: { authorization: 'Bearer __test_uid__' },
+    })
+    const res = new MockResponse()
+
+    await handleGetStats(req, res, mockVerifyToken)
+
+    expect(res.statusCode).toBe(200)
+    const body = res.body as { metric: string; data: Array<{ label: string; count: number }> }
+    expect(body.metric).toBe('devices')
+    expect(body.data.length).toBeGreaterThan(0)
+  })
+
+  it('returns country distribution for metric=countries', async () => {
+    await seedEvent({ country: 'DE', timestamp: Timestamp.fromDate(new Date(`${DATE}T10:00:00Z`)) })
+    await seedEvent({ country: 'US', timestamp: Timestamp.fromDate(new Date(`${DATE}T10:01:00Z`)) })
+
+    const req = makeReq({
+      query: { siteId: SITE_ID, from: DATE, to: DATE, metric: 'countries' },
+      headers: { authorization: 'Bearer __test_uid__' },
+    })
+    const res = new MockResponse()
+
+    await handleGetStats(req, res, mockVerifyToken)
+
+    expect(res.statusCode).toBe(200)
+    const body = res.body as { metric: string; data: Array<{ label: string; count: number }> }
+    expect(body.metric).toBe('countries')
+    expect(body.data.length).toBeGreaterThan(0)
+  })
+
+  it('returns referrer distribution with "direct" for empty referrer (metric=referrers)', async () => {
+    await seedEvent({ referrer: '', timestamp: Timestamp.fromDate(new Date(`${DATE}T10:00:00Z`)) })
+    await seedEvent({ referrer: 'https://google.com/search', timestamp: Timestamp.fromDate(new Date(`${DATE}T10:01:00Z`)) })
+
+    const req = makeReq({
+      query: { siteId: SITE_ID, from: DATE, to: DATE, metric: 'referrers' },
+      headers: { authorization: 'Bearer __test_uid__' },
+    })
+    const res = new MockResponse()
+
+    await handleGetStats(req, res, mockVerifyToken)
+
+    expect(res.statusCode).toBe(200)
+    const body = res.body as { metric: string; data: Array<{ label: string; count: number }> }
+    expect(body.metric).toBe('referrers')
+    const direct = body.data.find(d => d.label === 'direct')
+    expect(direct?.count).toBe(1)
+    const google = body.data.find(d => d.label === 'google.com')
+    expect(google?.count).toBe(1)
+  })
+
+  it('returns visitor distribution for metric=visitors', async () => {
+    await seedEvent({ visitorHash: 'v-a', timestamp: Timestamp.fromDate(new Date(`${DATE}T10:00:00Z`)) })
+    await seedEvent({ visitorHash: 'v-a', timestamp: Timestamp.fromDate(new Date(`${DATE}T10:01:00Z`)) })
+    await seedEvent({ visitorHash: 'v-b', timestamp: Timestamp.fromDate(new Date(`${DATE}T10:02:00Z`)) })
+
+    const req = makeReq({
+      query: { siteId: SITE_ID, from: DATE, to: DATE, metric: 'visitors' },
+      headers: { authorization: 'Bearer __test_uid__' },
+    })
+    const res = new MockResponse()
+
+    await handleGetStats(req, res, mockVerifyToken)
+
+    expect(res.statusCode).toBe(200)
+    const body = res.body as { metric: string; data: Array<{ label: string; count: number }> }
+    expect(body.metric).toBe('visitors')
+    expect(body.data.find(d => d.label === 'v-a')?.count).toBe(2)
+    expect(body.data.find(d => d.label === 'v-b')?.count).toBe(1)
+  })
+
+  it('returns custom event distribution for metric=customEvents', async () => {
+    await seedEvent({
+      type: 'custom',
+      name: 'signup_click',
+      timestamp: Timestamp.fromDate(new Date(`${DATE}T10:00:00Z`)),
+    })
+    await seedEvent({
+      type: 'custom',
+      name: 'signup_click',
+      timestamp: Timestamp.fromDate(new Date(`${DATE}T10:01:00Z`)),
+    })
+    await seedEvent({
+      type: 'pageview',
+      name: 'pageview',
+      timestamp: Timestamp.fromDate(new Date(`${DATE}T10:02:00Z`)),
+    })
+
+    const req = makeReq({
+      query: { siteId: SITE_ID, from: DATE, to: DATE, metric: 'customEvents' },
+      headers: { authorization: 'Bearer __test_uid__' },
+    })
+    const res = new MockResponse()
+
+    await handleGetStats(req, res, mockVerifyToken)
+
+    expect(res.statusCode).toBe(200)
+    const body = res.body as { metric: string; data: Array<{ label: string; count: number }> }
+    expect(body.metric).toBe('customEvents')
+    expect(body.data.find(d => d.label === 'signup_click')?.count).toBe(2)
+  })
+
+  it('returns empty data when no events exist in range', async () => {
+    const req = makeReq({
+      query: { siteId: SITE_ID, from: DATE, to: DATE, metric: 'pageviews' },
+      headers: { authorization: 'Bearer __test_uid__' },
+    })
+    const res = new MockResponse()
+
+    await handleGetStats(req, res, mockVerifyToken)
+
+    expect(res.statusCode).toBe(200)
+    const body = res.body as { totals: { pageviews: number; visitors: number } }
+    expect(body.totals.pageviews).toBe(0)
+    expect(body.totals.visitors).toBe(0)
+  })
+
+  it('correctly counts pageviews seeded with a plain JS Date timestamp', async () => {
+    // Seeds via a JS Date object (not Timestamp.fromDate) to exercise the
+    // `instanceof Date` branch in toIsoDate
+    await db.collection('events').add({
+      siteId: SITE_ID,
+      type: 'pageview',
+      name: 'pageview',
+      url: 'http://test.example.com/',
+      path: '/',
+      referrer: '',
+      utmSource: '',
+      utmMedium: '',
+      utmCampaign: '',
+      browser: 'Chrome',
+      browserVersion: '124',
+      os: 'Windows',
+      device: 'desktop',
+      country: 'XX',
+      visitorHash: 'hash-js-date',
+      sessionHash: 'session-js-date',
+      timestamp: new Date(`${DATE}T12:00:00Z`),
+      props: {},
+    })
+
+    const req = makeReq({
+      query: { siteId: SITE_ID, from: DATE, to: DATE, metric: 'pageviews' },
+      headers: { authorization: 'Bearer __test_uid__' },
+    })
+    const res = new MockResponse()
+
+    await handleGetStats(req, res, mockVerifyToken)
+
+    expect(res.statusCode).toBe(200)
+    const body = res.body as { totals: { pageviews: number; visitors: number } }
+    expect(body.totals.pageviews).toBeGreaterThanOrEqual(1)
+  })
 })
 
 // ---------------------------------------------------------------------------

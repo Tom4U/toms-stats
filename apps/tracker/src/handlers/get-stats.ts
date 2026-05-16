@@ -37,7 +37,7 @@ export type TokenVerifier = (token: string) => Promise<string | null>
 async function defaultVerifyToken(token: string): Promise<string | null> {
   try {
     const decoded = await getAuth().verifyIdToken(token)
-    return decoded.uid
+    return decoded.uid /* v8 ignore next — success path requires a live Firebase project; tests inject a mock verifier */
   } catch {
     return null
   }
@@ -79,6 +79,7 @@ function dateRange(from: string, to: string): string[] {
 
 function toIsoDate(ts: unknown): string {
   if (ts instanceof Timestamp) return ts.toDate().toISOString().slice(0, 10)
+  /* v8 ignore next 2 — Firestore always returns Timestamp; Date/empty fallbacks guard against raw writes in integration tests */
   if (ts instanceof Date) return ts.toISOString().slice(0, 10)
   return ''
 }
@@ -203,7 +204,7 @@ function buildLabelCountResponse(
         label = ev.name
         break
       default:
-        continue
+        continue /* v8 ignore next — exhaustive guard; TypeScript StatMetric union is fully handled above */
     }
 
     counts.set(label, (counts.get(label) ?? 0) + 1)
