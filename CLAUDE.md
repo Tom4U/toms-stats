@@ -93,9 +93,9 @@ Full schema → `specs/01-tracking-api.md`.
 | `SONAR_TOKEN` | GH secret (ci.yml) | SonarCloud → Account → Security → Tokens |
 
 `npm-publish.yml` uses npm Trusted Publishing (OIDC, no secret).
-One-time Firebase setup: `npx firebase login` → `npx firebase projects:create toms-stats` →
-`npx firebase use toms-stats` → Console enable Firestore(Native)/Auth(Google)/Hosting/Functions(Blaze) →
-`npx firebase functions:secrets:set VISITOR_SALT`.
+One-time Firebase setup: `firebase login` → `projects:create toms-stats` → `use toms-stats`
+→ Console enable Firestore(Native)/Auth(Google)/Hosting/Functions(Blaze) →
+`firebase functions:secrets:set VISITOR_SALT`.
 
 ## Naming
 
