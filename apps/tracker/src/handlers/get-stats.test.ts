@@ -157,6 +157,25 @@ describe('handleGetStats', () => {
     expect((res.body as { error: string }).error).toBeTruthy()
   })
 
+  it('AC-04-03: returns 500 when OWNER_UID env var is not configured (fail-closed)', async () => {
+    const previous = process.env['OWNER_UID']
+    delete process.env['OWNER_UID']
+    try {
+      const req = makeReq({
+        query: VALID_QUERY,
+        headers: { authorization: 'Bearer any-authenticated-user' },
+      })
+      const res = new MockResponse()
+
+      await handleGetStats(req, res, mockVerifyToken)
+
+      expect(res.statusCode).toBe(500)
+      expect((res.body as { error: string }).error).toBeTruthy()
+    } finally {
+      if (previous !== undefined) process.env['OWNER_UID'] = previous
+    }
+  })
+
   it('AC-04-04: returns 200 when token belongs to the owner uid', async () => {
     const req = makeReq({
       query: VALID_QUERY,

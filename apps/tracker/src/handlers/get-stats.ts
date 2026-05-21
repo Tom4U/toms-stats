@@ -251,8 +251,15 @@ export async function handleGetStats(
     res.status(401).json({ error: 'Invalid or expired token' })
     return
   }
+  // Fail-closed: a missing OWNER_UID would otherwise leave the stats endpoint
+  // open to any authenticated Google account.
   const ownerUid = process.env['OWNER_UID']
-  if (ownerUid && uid !== ownerUid) {
+  if (!ownerUid) {
+    console.error('OWNER_UID env var is not set — refusing to serve stats')
+    res.status(500).json({ error: 'Server misconfiguration' })
+    return
+  }
+  if (uid !== ownerUid) {
     res.status(403).json({ error: 'Forbidden' })
     return
   }
