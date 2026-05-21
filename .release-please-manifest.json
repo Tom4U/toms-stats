@@ -1,6 +1,6 @@
 {
-  ".": "0.2.0",
+  ".": "0.3.0",
   "packages/shared": "0.1.1",
-  "apps/tracker": "0.2.0",
-  "apps/dashboard": "0.0.1"
+  "apps/tracker": "0.3.0",
+  "apps/dashboard": "0.1.0"
 }

@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.3.0](https://github.com/Tom4U/toms-stats/compare/toms-stats-v0.2.0...toms-stats-v0.3.0) (2026-05-21)
+
+
+### Features
+
+* **auth:** Firebase Google sign-in and owner-UID authorisation ([#33](https://github.com/Tom4U/toms-stats/issues/33)) ([d49bb7c](https://github.com/Tom4U/toms-stats/commit/d49bb7cbdc57cb2a234c375bcfd9f7e91938157b))
+* **scripts:** add opt-in strict test/code commit-split gate (Gate 3) ([#39](https://github.com/Tom4U/toms-stats/issues/39)) ([7278f73](https://github.com/Tom4U/toms-stats/commit/7278f73fc93687a96a63b18d1b9ce3884fe42ffc))
+* **scripts:** enforce test-change rationale in commit-msg hook ([#38](https://github.com/Tom4U/toms-stats/issues/38)) ([04b225b](https://github.com/Tom4U/toms-stats/commit/04b225bda3c23964a08e2b5f54092f239ea89d96))
+
+
+### Bug Fixes
+
+* **ci:** read draft status via REST, not workflow_run payload ([#45](https://github.com/Tom4U/toms-stats/issues/45)) ([9bcbc90](https://github.com/Tom4U/toms-stats/commit/9bcbc90998c8e66ff4df372bf058cd9303f490c1))
+
 ## [0.2.0](https://github.com/Tom4U/toms-stats/compare/toms-stats-v0.1.1...toms-stats-v0.2.0) (2026-05-16)
 
 
