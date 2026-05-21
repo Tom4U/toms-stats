@@ -1,6 +1,6 @@
 # Spec 04 — Authentication & Authorisation
 
-## Status: Draft
+## Status: Active
 
 ## Overview
 

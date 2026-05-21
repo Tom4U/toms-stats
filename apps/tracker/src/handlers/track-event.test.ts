@@ -84,6 +84,22 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
+  // AC-04-06: Tracking endpoint is public — no Authorization header required
+  // -------------------------------------------------------------------------
+  it('AC-04-06: returns 204 for a valid pageview POST with no Authorization header', async () => {
+    const req = makeReq({
+      body: { siteId: SITE_ID, type: 'pageview', url: 'http://test.example.com/', referrer: '', name: null, props: {} },
+      headers: { 'x-forwarded-for': TEST_IP, 'user-agent': TEST_UA },
+      // intentionally no 'authorization' header
+    })
+    const res = new MockResponse()
+
+    await handleTrackEvent(req, res, DAY_A)
+
+    expect(res.statusCode).toBe(204)
+  })
+
+  // -------------------------------------------------------------------------
   // AC-01-01: Pageview stored with correct fields
   // -------------------------------------------------------------------------
   it('AC-01-01: stores pageview document with all required fields', async () => {

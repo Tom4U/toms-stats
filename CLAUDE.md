@@ -101,10 +101,3 @@ One-time Firebase setup: `firebase login` → `projects:create toms-stats` → `
 
 Files kebab-case · Types PascalCase · Functions camelCase · Firestore snake_case ·
 tests `*.test.ts` · stories `*.stories.svelte`.
-
-## NOSONAR inventory
-
-All three in `apps/tracker/src/emulator.global-setup.ts`, rule = PATH-resolution security
-hotspot, all test-setup-only with hardcoded args: `spawn('taskkill',…)` (Windows
-process-tree cleanup), `spawn('cmd.exe',…)`, `spawn('npx',…)` (Unix emulator launch).
-New suppression → append a row here + inline `// NOSONAR: <reason>`.
