@@ -10,15 +10,75 @@ concurrency:
   cancel-in-progress: true
 
 jobs:
+  paths:
+    name: Detect Changed Paths
+    runs-on: ubuntu-latest
+    outputs:
+      markdown: ${{ steps.filter.outputs.markdown }}
+      tracker: ${{ steps.filter.outputs.tracker }}
+      dashboard: ${{ steps.filter.outputs.dashboard }}
+      shared: ${{ steps.filter.outputs.shared }}
+      firestore: ${{ steps.filter.outputs.firestore }}
+      code: ${{ steps.filter.outputs.code }}
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Detect changed paths
+        id: filter
+        uses: dorny/paths-filter@fbd0ab8f3e69293af611ebaee6363fc25e6d187d # v4.0.1
+        with:
+          filters: |
+            markdown:
+              - '**/*.md'
+              - '.markdownlint*'
+            tracker:
+              - 'apps/tracker/src/**'
+              - 'apps/tracker/test/**'
+              - 'apps/tracker/tsconfig*.json'
+              - 'apps/tracker/stryker.config.json'
+              - '!apps/tracker/package.json'
+              - '!apps/tracker/CHANGELOG.md'
+            dashboard:
+              - 'apps/dashboard/src/**'
+              - 'apps/dashboard/.storybook/**'
+              - 'apps/dashboard/tsconfig*.json'
+              - '!apps/dashboard/package.json'
+              - '!apps/dashboard/CHANGELOG.md'
+            shared:
+              - 'packages/shared/src/**'
+              - 'packages/shared/tsconfig*.json'
+              - '!packages/shared/package.json'
+              - '!packages/shared/CHANGELOG.md'
+            firestore:
+              - 'firestore.rules'
+              - 'firestore.indexes.json'
+            code:
+              - 'apps/tracker/src/**'
+              - 'apps/tracker/test/**'
+              - 'apps/tracker/tsconfig*.json'
+              - 'apps/dashboard/src/**'
+              - 'apps/dashboard/.storybook/**'
+              - 'apps/dashboard/tsconfig*.json'
+              - 'packages/shared/src/**'
+              - 'packages/shared/tsconfig*.json'
+              - 'firestore.rules'
+              - 'firestore.indexes.json'
+              - 'package-lock.json'
+              - 'tsconfig*.json'
+              - '.github/workflows/ci.yml'
+
   lint-markdown:
     name: Markdown Lint
     runs-on: ubuntu-latest
+    needs: [paths]
+    if: needs.paths.outputs.markdown == 'true'
     steps:
       - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci --ignore-scripts
@@ -26,37 +86,11 @@ jobs:
       - name: Lint Markdown
         run: npm run lint:md
 
-  lint-and-check:
-    name: Lint & Type Check
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-
-      - uses: actions/setup-node@v6
-        with:
-          node-version: '24'
-
-      - name: Install dependencies
-        run: npm ci --ignore-scripts
-
-      - name: Build shared package
-        run: npm -w packages/shared run build
-
-      - name: Type check tracker
-        run: npm -w apps/tracker run check
-
-      - name: Type check dashboard
-        run: npm -w apps/dashboard run check
-
-      - name: Lint tracker
-        run: npm -w apps/tracker run lint
-
-      - name: Lint dashboard
-        run: npm -w apps/dashboard run lint
-
   spec-coupling:
     name: Spec-Coupling Gate
     runs-on: ubuntu-latest
+    needs: [paths]
+    if: needs.paths.outputs.code == 'true'
     steps:
       - uses: actions/checkout@v6
         with:
@@ -72,15 +106,68 @@ jobs:
           GITHUB_BASE_REF: ${{ github.base_ref }}
           SPEC_COUPLING_EXEMPT: ${{ contains(github.event.pull_request.labels.*.name, 'no-spec-change') && '1' || '0' }}
 
-  test-unit:
-    name: Unit Tests
+  lint-tracker:
+    name: Lint Tracker
     runs-on: ubuntu-latest
+    needs: [paths]
+    if: needs.paths.outputs.tracker == 'true' || needs.paths.outputs.shared == 'true'
     steps:
       - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build shared package
+        run: npm -w packages/shared run build
+
+      - name: Type check tracker
+        run: npm -w apps/tracker run check
+
+      - name: Lint tracker
+        run: npm -w apps/tracker run lint
+
+  lint-dashboard:
+    name: Lint Dashboard
+    runs-on: ubuntu-latest
+    needs: [paths]
+    if: needs.paths.outputs.dashboard == 'true' || needs.paths.outputs.shared == 'true'
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci --ignore-scripts
+
+      - name: Build shared package
+        run: npm -w packages/shared run build
+
+      - name: Type check dashboard
+        run: npm -w apps/dashboard run check
+
+      - name: Lint dashboard
+        run: npm -w apps/dashboard run lint
+
+  test-unit:
+    name: Unit Tests
+    runs-on: ubuntu-latest
+    needs: [paths]
+    if: needs.paths.outputs.dashboard == 'true' || needs.paths.outputs.shared == 'true'
+    steps:
+      - uses: actions/checkout@v6
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci --ignore-scripts
@@ -104,12 +191,18 @@ jobs:
   test-integration:
     name: Integration Tests (Firebase Emulators)
     runs-on: ubuntu-latest
+    needs: [paths]
+    if: >
+      needs.paths.outputs.tracker == 'true' ||
+      needs.paths.outputs.shared == 'true' ||
+      needs.paths.outputs.firestore == 'true'
     steps:
       - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci --ignore-scripts
@@ -138,13 +231,19 @@ jobs:
   build:
     name: Build
     runs-on: ubuntu-latest
-    needs: [lint-and-check]
+    needs: [paths, lint-tracker, lint-dashboard]
+    # Run when code changed and neither lint job failed (skipped counts as passing here).
+    if: >
+      needs.paths.outputs.code == 'true' &&
+      needs.lint-tracker.result != 'failure' &&
+      needs.lint-dashboard.result != 'failure'
     steps:
       - uses: actions/checkout@v6
 
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
+          cache: 'npm'
 
       - name: Install dependencies
         run: npm ci --ignore-scripts
@@ -161,19 +260,27 @@ jobs:
   sonarqube:
     name: SonarQube
     runs-on: ubuntu-latest
-    needs: [test-unit, test-integration]
+    needs: [paths, test-unit, test-integration]
+    # Only run when code changed and at least one test job actually produced coverage.
+    if: >
+      needs.paths.outputs.code == 'true' && (
+        needs.test-unit.result == 'success' ||
+        needs.test-integration.result == 'success'
+      )
     steps:
       - uses: actions/checkout@de0fac2e4500dabe0009e67214ff5f5447ce83dd # v6.0.2
         with:
           fetch-depth: 0  # shallow clones disabled for better analysis relevancy
 
       - name: Download dashboard coverage
+        if: needs.test-unit.result == 'success'
         uses: actions/download-artifact@v8
         with:
           name: dashboard-coverage
           path: apps/dashboard/coverage
 
       - name: Download tracker coverage
+        if: needs.test-integration.result == 'success'
         uses: actions/download-artifact@v8
         with:
           name: tracker-coverage
