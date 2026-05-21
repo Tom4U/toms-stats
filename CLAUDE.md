@@ -18,6 +18,9 @@ project-specific delta.
 - **No `any`**, no `// eslint-disable`. Exported functions have explicit return types.
 - **SDD then TDD**: no implementation file without a complete spec in `specs/`; no code
   before a failing test. Tests use the **local emulators only** — never live Firestore/Auth.
+- **Tests are immutable** — existing tests may only be modified when (a) the corresponding
+  spec changed in the same PR, or (b) the PR body's "Test changes" section gives a documented
+  domain reason. Modifying tests to make them pass is forbidden. Adding new tests is always allowed.
 - No features outside current spec scope. Changing a feature = update its spec first.
 - Every PR references its AC (e.g. `Closes AC-01-03`).
 - File soft limit ~200 lines. No abstraction before the third use case. Comments = WHY only.

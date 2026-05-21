@@ -4,33 +4,21 @@
 
 ## Linked spec / acceptance criteria
 
-<!-- e.g. Closes AC-01-03 in specs/01-tracking-api.md -->
+<!-- e.g. Closes AC-01-03 in specs/01-tracking-api.md — or N/A for tooling -->
 
 Spec: `specs/`
 AC:
 
-## Type of change
+## Test changes
 
-- [ ] `feat` — new feature
-- [ ] `fix` — bug fix
-- [ ] `refactor` — no behaviour change
-- [ ] `docs` — documentation only
-- [ ] `chore` — tooling, deps, config
+<!-- Tick one. Modifying existing tests requires a documented reason. Adding new tests is always allowed. -->
 
-## Test plan
+- [ ] No existing tests were modified
+- [ ] Existing tests modified — reason: <!-- spec changed: AC-xx / or documented domain reason -->
 
-- [ ] Unit tests added / updated
-- [ ] Integration tests added / updated (emulator)
-- [ ] Storybook story added / updated (for UI components)
-- [ ] `npm test` passes locally
-- [ ] `npm run check` passes locally
+## CI
 
-## Docs freshness
-
-- [ ] `README.md` Features table reflects the change (or N/A for non-user-facing)
-- [ ] `CLAUDE.md` updated if conventions / commands / structure changed (or N/A)
-- [ ] `.spec-audit-allowlist.json` entries removed for ACs now covered by tests (or N/A)
-- [ ] Backlog issue closed / updated if a roadmap or tech-debt item was resolved (or N/A)
+- [ ] CI green <!-- auto-ticked by ci-ready workflow -->
 
 ## Notes for reviewer
 
