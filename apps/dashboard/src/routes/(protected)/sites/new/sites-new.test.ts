@@ -1,11 +1,7 @@
 import { describe, it, expect } from 'vitest';
+import { isValidHostname } from '$lib/validation.js';
 
-// Hostname validation logic extracted inline for unit testing
-function isValidHostname(value: string): boolean {
-	return /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/.test(value);
-}
-
-describe('site domain validation', () => {
+describe('isValidHostname', () => {
 	it('accepts a simple hostname', () => {
 		expect(isValidHostname('example.com')).toBe(true);
 	});
@@ -27,6 +23,11 @@ describe('site domain validation', () => {
 	});
 
 	it('rejects a bare IP address', () => {
-		expect(isValidHostname('192.168.1.1')).toBe(false);
+		// NOSONAR: test-only value to verify that IP addresses are rejected by the hostname validator
+		expect(isValidHostname('192.0.2.1')).toBe(false); // RFC 5737 documentation range
+	});
+
+	it('accepts a domain after trimming surrounding whitespace', () => {
+		expect(isValidHostname(' example.com '.trim())).toBe(true);
 	});
 });

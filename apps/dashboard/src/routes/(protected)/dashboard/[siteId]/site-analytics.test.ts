@@ -24,8 +24,7 @@ describe('/dashboard/[siteId] load', () => {
 
 		const result = await load({ params: { siteId: 'site-42' } } as never);
 
-		expect(result.siteId).toBe('site-42');
-		expect(result.siteName).toBe('My Blog');
+		expect(result).toMatchObject({ siteId: 'site-42', siteName: 'My Blog' });
 	});
 
 	it('throws 404 when siteId is not found', async () => {

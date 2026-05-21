@@ -16,9 +16,9 @@
 	let { value, onchange }: Props = $props();
 
 	let selected = $state<Preset>('7d');
-	// Local copies for the custom date inputs — initialised once from the prop
-	let customFrom = $state(value.from);
-	let customTo = $state(value.to);
+	// Seeded lazily in selectPreset('custom') from the current value prop
+	let customFrom = $state('');
+	let customTo = $state('');
 
 	const presets: { label: string; value: Preset }[] = [
 		{ label: 'Today', value: 'today' },
@@ -30,7 +30,12 @@
 
 	function selectPreset(preset: Preset): void {
 		selected = preset;
-		if (preset === 'custom') return;
+		if (preset === 'custom') {
+			// Seed inputs from the current active range so they're never stale
+			customFrom = value.from;
+			customTo = value.to;
+			return;
+		}
 		const today = isoDate(new Date());
 		const range = preset === 'today' ? { from: today, to: today } : dateRangePreset(preset);
 		onchange(range);

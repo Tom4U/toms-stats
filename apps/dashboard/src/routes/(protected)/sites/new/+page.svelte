@@ -1,6 +1,7 @@
 <script lang="ts">
 	import { goto } from '$app/navigation';
 	import { createSite } from '$lib/api.js';
+	import { isValidHostname } from '$lib/validation.js';
 	import NavBar from '$lib/components/NavBar.svelte';
 	import ErrorBanner from '$lib/components/ErrorBanner.svelte';
 
@@ -9,26 +10,24 @@
 	let submitting = $state(false);
 	let errorMessage = $state<string | null>(null);
 
-	function isValidHostname(value: string): boolean {
-		return /^([a-zA-Z0-9]([a-zA-Z0-9-]{0,61}[a-zA-Z0-9])?\.)+[a-zA-Z]{2,}$/.test(value);
-	}
-
 	async function submit(e: SubmitEvent): Promise<void> {
 		e.preventDefault();
 		errorMessage = null;
+
+		const trimmedDomain = domain.trim();
 
 		if (!name.trim()) {
 			errorMessage = 'Site name is required.';
 			return;
 		}
-		if (!isValidHostname(domain)) {
+		if (!isValidHostname(trimmedDomain)) {
 			errorMessage = 'Domain must be a valid hostname (e.g. example.com).';
 			return;
 		}
 
 		submitting = true;
 		try {
-			const site = await createSite({ name: name.trim(), domain: domain.trim() });
+			const site = await createSite({ name: name.trim(), domain: trimmedDomain });
 			// eslint-disable-next-line svelte/no-navigation-without-resolve -- goto is awaited; rule false-positive in async event handlers
 			await goto(`/dashboard/${site.id}`);
 		} catch (err) {

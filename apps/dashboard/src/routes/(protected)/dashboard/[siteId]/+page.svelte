@@ -6,7 +6,6 @@
 	import LineChart from '$lib/components/LineChart.svelte';
 	import BarChart from '$lib/components/BarChart.svelte';
 	import StatsTable from '$lib/components/StatsTable.svelte';
-	import TopPagesTable from '$lib/components/TopPagesTable.svelte';
 	import CustomEventTable from '$lib/components/CustomEventTable.svelte';
 	import LoadingSpinner from '$lib/components/LoadingSpinner.svelte';
 	import ErrorBanner from '$lib/components/ErrorBanner.svelte';
@@ -68,18 +67,6 @@
 	const hasData = $derived(
 		(pageviewStats?.totals.pageviews ?? 0) > 0 || (labelStats?.data.length ?? 0) > 0
 	);
-
-	// Compute top pages as aggregated daily data (use path from events — not available directly;
-	// re-use the pageview data rows summarized by date as placeholder until a dedicated /api/pages endpoint exists)
-	const topPages = $derived(
-		pageviewStats
-			? pageviewStats.data.map((d) => ({
-					path: d.date,
-					pageviews: d.pageviews,
-					visitors: d.visitors
-				}))
-			: []
-	);
 </script>
 
 <div class="min-h-screen bg-gray-50">
@@ -109,7 +96,7 @@
 						Start tracking by adding the snippet to your site:
 					</p>
 					<pre
-						class="mx-auto mt-4 max-w-lg overflow-x-auto rounded-lg bg-gray-100 p-4 text-left text-xs text-gray-700">&lt;script src="https://your-host/snippet.js" data-site-id="{data.siteId}"&gt;&lt;/script&gt;</pre>
+						class="mx-auto mt-4 max-w-lg overflow-x-auto rounded-lg bg-gray-100 p-4 text-left text-xs text-gray-700">&lt;script src="/snippet.js" data-site-id="{data.siteId}"&gt;&lt;/script&gt;</pre>
 				</div>
 			{:else if activeMetric === 'pageviews' && pageviewStats}
 				<div class="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
@@ -127,13 +114,8 @@
 					</div>
 				</div>
 
-				<div class="mb-6 rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-					<LineChart data={pageviewStats.data} />
-				</div>
-
 				<div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-					<h2 class="mb-3 text-sm font-medium text-gray-700">Top pages</h2>
-					<TopPagesTable data={topPages} />
+					<LineChart data={pageviewStats.data} />
 				</div>
 			{:else if activeMetric === 'customEvents' && labelStats}
 				<div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">

@@ -25,17 +25,29 @@
 		</thead>
 		<tbody class="divide-y divide-gray-100">
 			{#each data as row (row.label)}
-				<tr
-					class="cursor-pointer hover:bg-gray-50"
-					onclick={() => toggle(row.label)}
-					aria-expanded={expanded.has(row.label)}
-				>
+				<tr class="hover:bg-gray-50">
 					<td class="px-4 py-2 font-medium text-gray-700">
-						<span class="mr-1 text-gray-400">{expanded.has(row.label) ? '▾' : '▸'}</span>
-						{row.label}
+						<button
+							type="button"
+							class="flex items-center gap-1 text-left"
+							aria-expanded={expanded.has(row.label)}
+							onclick={() => toggle(row.label)}
+						>
+							<span class="text-gray-400" aria-hidden="true"
+								>{expanded.has(row.label) ? '▾' : '▸'}</span
+							>
+							{row.label}
+						</button>
 					</td>
 					<td class="px-4 py-2 text-right text-gray-600">{row.count.toLocaleString()}</td>
 				</tr>
+				{#if expanded.has(row.label)}
+					<tr class="bg-gray-50">
+						<td colspan="2" class="px-6 py-2 text-xs text-gray-400 italic">
+							Per-props breakdown requires a dedicated API endpoint (not yet available).
+						</td>
+					</tr>
+				{/if}
 			{/each}
 		</tbody>
 	</table>
