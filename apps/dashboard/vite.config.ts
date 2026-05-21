@@ -11,12 +11,14 @@ export default defineConfig({
 		coverage: {
 			provider: 'v8',
 			reporter: ['text', 'lcov'],
-			include: ['src/lib/**/*.ts', 'src/lib/**/*.svelte'],
+			include: ['src/lib/**/*.ts', 'src/lib/**/*.svelte', 'src/routes/**/*.ts'],
 			exclude: [
 				'src/**/*.test.ts',
 				'src/**/*.spec.ts',
+				'src/**/*.e2e.ts',
 				'src/**/*.stories.svelte',
-				'src/lib/firebase-client.ts'
+				'src/lib/firebase-client.ts',
+				'src/routes/+layout.ts'
 			]
 		},
 		projects: [
