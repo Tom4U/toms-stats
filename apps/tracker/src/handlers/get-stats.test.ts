@@ -2,6 +2,7 @@ import { describe, it, expect, beforeAll, beforeEach, afterAll } from 'vitest'
 import { initializeApp, getApps, deleteApp } from 'firebase-admin/app'
 import { getFirestore, FieldValue, Timestamp } from 'firebase-admin/firestore'
 import { handleGetStats } from './get-stats.js'
+import { mockVerifyToken, ownerAuthHeader, nonOwnerAuthHeader, invalidAuthHeader } from '../test-helpers/auth-mock.js'
 
 if (getApps().length === 0) {
   initializeApp({ projectId: 'toms-stats' })
@@ -130,7 +131,7 @@ describe('handleGetStats', () => {
   it('AC-01-07: returns 401 when Bearer token is invalid', async () => {
     const req = makeReq({
       query: VALID_QUERY,
-      headers: { authorization: 'Bearer __invalid__' },
+      headers: invalidAuthHeader(),
     })
     const res = new MockResponse()
 
@@ -147,7 +148,7 @@ describe('handleGetStats', () => {
   it('AC-04-03: returns 403 when token belongs to a non-owner uid', async () => {
     const req = makeReq({
       query: VALID_QUERY,
-      headers: { authorization: 'Bearer some-other-user' },
+      headers: nonOwnerAuthHeader(),
     })
     const res = new MockResponse()
 
@@ -163,7 +164,7 @@ describe('handleGetStats', () => {
     try {
       const req = makeReq({
         query: VALID_QUERY,
-        headers: { authorization: 'Bearer any-authenticated-user' },
+        headers: nonOwnerAuthHeader(),
       })
       const res = new MockResponse()
 
@@ -179,7 +180,7 @@ describe('handleGetStats', () => {
   it('AC-04-04: returns 200 when token belongs to the owner uid', async () => {
     const req = makeReq({
       query: VALID_QUERY,
-      headers: { authorization: 'Bearer owner-uid-test' },
+      headers: ownerAuthHeader(),
     })
     const res = new MockResponse()
 
@@ -201,7 +202,7 @@ describe('handleGetStats', () => {
 
     const req = makeReq({
       query: { siteId: SITE_ID, from: DATE, to: DATE, metric: 'pageviews' },
-      headers: { authorization: 'Bearer owner-uid-test' },
+      headers: ownerAuthHeader(),
     })
     const res = new MockResponse()
 
@@ -223,7 +224,7 @@ describe('handleGetStats', () => {
 
     const req = makeReq({
       query: { siteId: SITE_ID, from: DATE, to: DATE, metric: 'pageviews' },
-      headers: { authorization: 'Bearer owner-uid-test' },
+      headers: ownerAuthHeader(),
     })
     const res = new MockResponse()
 
@@ -241,7 +242,7 @@ describe('handleGetStats', () => {
   it('returns 400 when siteId is missing', async () => {
     const req = makeReq({
       query: { from: DATE, to: DATE, metric: 'pageviews' },
-      headers: { authorization: 'Bearer owner-uid-test' },
+      headers: ownerAuthHeader(),
     })
     const res = new MockResponse()
 
@@ -254,7 +255,7 @@ describe('handleGetStats', () => {
   it('returns 404 when siteId does not exist', async () => {
     const req = makeReq({
       query: { siteId: 'nonexistent-site-xyz', from: DATE, to: DATE, metric: 'pageviews' },
-      headers: { authorization: 'Bearer owner-uid-test' },
+      headers: ownerAuthHeader(),
     })
     const res = new MockResponse()
 
@@ -266,7 +267,7 @@ describe('handleGetStats', () => {
   it('returns 400 when date range exceeds 366 days', async () => {
     const req = makeReq({
       query: { siteId: SITE_ID, from: '2024-01-01', to: '2025-01-03', metric: 'pageviews' },
-      headers: { authorization: 'Bearer owner-uid-test' },
+      headers: ownerAuthHeader(),
     })
     const res = new MockResponse()
 
@@ -279,7 +280,7 @@ describe('handleGetStats', () => {
   it('returns 400 when metric is invalid', async () => {
     const req = makeReq({
       query: { siteId: SITE_ID, from: DATE, to: DATE, metric: 'invalid' },
-      headers: { authorization: 'Bearer owner-uid-test' },
+      headers: ownerAuthHeader(),
     })
     const res = new MockResponse()
 
@@ -292,7 +293,7 @@ describe('handleGetStats', () => {
   it('returns 400 when from date is malformed', async () => {
     const req = makeReq({
       query: { siteId: SITE_ID, from: 'not-a-date', to: DATE, metric: 'pageviews' },
-      headers: { authorization: 'Bearer owner-uid-test' },
+      headers: ownerAuthHeader(),
     })
     const res = new MockResponse()
 
@@ -305,7 +306,7 @@ describe('handleGetStats', () => {
   it('returns 400 when to is before from', async () => {
     const req = makeReq({
       query: { siteId: SITE_ID, from: '2024-03-20', to: '2024-03-10', metric: 'pageviews' },
-      headers: { authorization: 'Bearer owner-uid-test' },
+      headers: ownerAuthHeader(),
     })
     const res = new MockResponse()
 
@@ -326,7 +327,7 @@ describe('handleGetStats', () => {
 
     const req = makeReq({
       query: { siteId: SITE_ID, from: DATE, to: DATE, metric: 'browsers' },
-      headers: { authorization: 'Bearer owner-uid-test' },
+      headers: ownerAuthHeader(),
     })
     const res = new MockResponse()
 
@@ -345,7 +346,7 @@ describe('handleGetStats', () => {
 
     const req = makeReq({
       query: { siteId: SITE_ID, from: DATE, to: DATE, metric: 'os' },
-      headers: { authorization: 'Bearer owner-uid-test' },
+      headers: ownerAuthHeader(),
     })
     const res = new MockResponse()
 
@@ -363,7 +364,7 @@ describe('handleGetStats', () => {
 
     const req = makeReq({
       query: { siteId: SITE_ID, from: DATE, to: DATE, metric: 'devices' },
-      headers: { authorization: 'Bearer owner-uid-test' },
+      headers: ownerAuthHeader(),
     })
     const res = new MockResponse()
 
@@ -381,7 +382,7 @@ describe('handleGetStats', () => {
 
     const req = makeReq({
       query: { siteId: SITE_ID, from: DATE, to: DATE, metric: 'countries' },
-      headers: { authorization: 'Bearer owner-uid-test' },
+      headers: ownerAuthHeader(),
     })
     const res = new MockResponse()
 
@@ -399,7 +400,7 @@ describe('handleGetStats', () => {
 
     const req = makeReq({
       query: { siteId: SITE_ID, from: DATE, to: DATE, metric: 'referrers' },
-      headers: { authorization: 'Bearer owner-uid-test' },
+      headers: ownerAuthHeader(),
     })
     const res = new MockResponse()
 
@@ -421,7 +422,7 @@ describe('handleGetStats', () => {
 
     const req = makeReq({
       query: { siteId: SITE_ID, from: DATE, to: DATE, metric: 'visitors' },
-      headers: { authorization: 'Bearer owner-uid-test' },
+      headers: ownerAuthHeader(),
     })
     const res = new MockResponse()
 
@@ -453,7 +454,7 @@ describe('handleGetStats', () => {
 
     const req = makeReq({
       query: { siteId: SITE_ID, from: DATE, to: DATE, metric: 'customEvents' },
-      headers: { authorization: 'Bearer owner-uid-test' },
+      headers: ownerAuthHeader(),
     })
     const res = new MockResponse()
 
@@ -468,7 +469,7 @@ describe('handleGetStats', () => {
   it('returns empty data when no events exist in range', async () => {
     const req = makeReq({
       query: { siteId: SITE_ID, from: DATE, to: DATE, metric: 'pageviews' },
-      headers: { authorization: 'Bearer owner-uid-test' },
+      headers: ownerAuthHeader(),
     })
     const res = new MockResponse()
 
@@ -484,7 +485,7 @@ describe('handleGetStats', () => {
   // Copilot-review fixes: 405, malformed referrer, invalid calendar date
   // -------------------------------------------------------------------------
   it('returns 405 for non-GET requests', async () => {
-    const req = makeReq({ method: 'POST', query: VALID_QUERY, headers: { authorization: 'Bearer owner-uid-test' } })
+    const req = makeReq({ method: 'POST', query: VALID_QUERY, headers: ownerAuthHeader() })
     const res = new MockResponse()
 
     await handleGetStats(req, res, mockVerifyToken)
@@ -497,7 +498,7 @@ describe('handleGetStats', () => {
 
     const req = makeReq({
       query: { siteId: SITE_ID, from: DATE, to: DATE, metric: 'referrers' },
-      headers: { authorization: 'Bearer owner-uid-test' },
+      headers: ownerAuthHeader(),
     })
     const res = new MockResponse()
 
@@ -511,7 +512,7 @@ describe('handleGetStats', () => {
   it('returns 400 for a from date that passes regex but is not a valid calendar date', async () => {
     const req = makeReq({
       query: { siteId: SITE_ID, from: '2024-13-40', to: DATE, metric: 'pageviews' },
-      headers: { authorization: 'Bearer owner-uid-test' },
+      headers: ownerAuthHeader(),
     })
     const res = new MockResponse()
 
@@ -547,7 +548,7 @@ describe('handleGetStats', () => {
 
     const req = makeReq({
       query: { siteId: SITE_ID, from: DATE, to: DATE, metric: 'pageviews' },
-      headers: { authorization: 'Bearer owner-uid-test' },
+      headers: ownerAuthHeader(),
     })
     const res = new MockResponse()
 
@@ -559,11 +560,3 @@ describe('handleGetStats', () => {
   })
 })
 
-// ---------------------------------------------------------------------------
-// Injected verifier — bypasses real Firebase Auth in test mode
-// The token string encodes the uid directly so tests can control who is "logged in".
-// ---------------------------------------------------------------------------
-async function mockVerifyToken(token: string): Promise<string | null> {
-  if (token === '__invalid__') return null
-  return token // token IS the uid in test mode
-}
