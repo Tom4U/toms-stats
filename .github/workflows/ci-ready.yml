@@ -1,0 +1,174 @@
+name: PR Auto-Ready
+
+# Fires when the CI workflow completes on a PR branch.
+# On success: tick the "CI green" checkbox, undraft the PR, resolve Copilot threads.
+# On failure: post a comment listing which jobs failed.
+
+on:
+  workflow_run:
+    workflows: ['CI']
+    types: [completed]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  auto-ready:
+    name: Auto-ready on green CI
+    runs-on: ubuntu-latest
+    # Only act on PR-triggered CI runs (head_branch != main/release-*)
+    if: >
+      github.event.workflow_run.event == 'pull_request' &&
+      github.event.workflow_run.head_branch != 'main'
+
+    steps:
+      - name: Find PR for this workflow run
+        id: find-pr
+        uses: actions/github-script@v9.0.0
+        with:
+          script: |
+            const run = context.payload.workflow_run;
+            const { data: prs } = await github.rest.pulls.list({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              head: `${context.repo.owner}:${run.head_branch}`,
+            });
+            if (prs.length === 0) {
+              core.info('No open PR found for branch ' + run.head_branch);
+              return null;
+            }
+            const pr = prs[0];
+            core.setOutput('pr_number', pr.number);
+            core.setOutput('is_draft', pr.draft ? 'true' : 'false');
+            return pr.number;
+
+      - name: Handle CI failure — post comment
+        if: >
+          steps.find-pr.outputs.pr_number != '' &&
+          github.event.workflow_run.conclusion == 'failure'
+        uses: actions/github-script@v9.0.0
+        with:
+          script: |
+            const prNumber = parseInt('${{ steps.find-pr.outputs.pr_number }}');
+            const runUrl = context.payload.workflow_run.html_url;
+            await github.rest.issues.createComment({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: prNumber,
+              body: `### CI failed\n\nOne or more jobs did not pass. [View run](${runUrl})\n\n` +
+                    `The PR remains in Draft until CI is green.`,
+            });
+
+      - name: Tick CI-green checkbox and undraft PR
+        if: >
+          steps.find-pr.outputs.pr_number != '' &&
+          github.event.workflow_run.conclusion == 'success'
+        uses: actions/github-script@v9.0.0
+        with:
+          script: |
+            const prNumber = parseInt('${{ steps.find-pr.outputs.pr_number }}');
+            const isDraft = '${{ steps.find-pr.outputs.is_draft }}' === 'true';
+
+            // Tick the "CI green" checkbox in the PR body
+            const { data: pr } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+
+            const tickedBody = pr.body
+              ? pr.body.replace(
+                  /- \[ \] CI green/,
+                  '- [x] CI green',
+                )
+              : pr.body;
+
+            if (tickedBody !== pr.body) {
+              await github.rest.pulls.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+                body: tickedBody,
+              });
+              core.info('CI green checkbox ticked.');
+            }
+
+            // Undraft the PR via GraphQL (REST has no undraft endpoint)
+            if (isDraft) {
+              const { data: fresh } = await github.rest.pulls.get({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pull_number: prNumber,
+              });
+              await github.graphql(`
+                mutation($id: ID!) {
+                  markPullRequestReadyForReview(input: { pullRequestId: $id }) {
+                    pullRequest { isDraft }
+                  }
+                }
+              `, { id: fresh.node_id });
+              core.info('PR marked ready for review.');
+            } else {
+              core.info('PR was already ready for review.');
+            }
+
+      - name: Resolve Copilot review threads
+        if: >
+          steps.find-pr.outputs.pr_number != '' &&
+          github.event.workflow_run.conclusion == 'success'
+        uses: actions/github-script@v9.0.0
+        with:
+          script: |
+            const prNumber = parseInt('${{ steps.find-pr.outputs.pr_number }}');
+
+            // Fetch all review threads
+            const { repository } = await github.graphql(`
+              query($owner: String!, $repo: String!, $pr: Int!) {
+                repository(owner: $owner, name: $repo) {
+                  pullRequest(number: $pr) {
+                    reviewThreads(first: 100) {
+                      nodes {
+                        id
+                        isResolved
+                        comments(first: 5) {
+                          nodes { author { login } body }
+                        }
+                      }
+                    }
+                  }
+                }
+              }
+            `, {
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pr: prNumber,
+            });
+
+            const threads = repository.pullRequest.reviewThreads.nodes;
+            const copilotThreads = threads.filter(t =>
+              !t.isResolved &&
+              t.comments.nodes.some(c =>
+                c.author?.login === 'copilot-pull-request-reviewer'
+              )
+            );
+
+            core.info(`Found ${copilotThreads.length} open Copilot thread(s).`);
+
+            for (const thread of copilotThreads) {
+              const firstComment = thread.comments.nodes[0];
+              core.info(`Resolving thread: ${firstComment?.body?.slice(0, 80)}…`);
+
+              await github.graphql(`
+                mutation($id: ID!) {
+                  resolveReviewThread(input: { threadId: $id }) {
+                    thread { isResolved }
+                  }
+                }
+              `, { id: thread.id });
+            }
+
+            if (copilotThreads.length > 0) {
+              core.info('All Copilot threads resolved.');
+            }
