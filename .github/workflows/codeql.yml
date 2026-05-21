@@ -12,13 +12,14 @@ on:
       - 'specs/**'
       - 'LICENSE'
       - '.github/PULL_REQUEST_TEMPLATE.md'
-      - '**/package.json'
       - '.release-please-manifest.json'
+      - 'release-please-config.json'
   schedule:
     - cron: '0 8 * * 1'
 
+# Separate concurrency groups per event so scheduled scans are never cancelled by push runs.
 concurrency:
-  group: codeql-${{ github.ref }}
+  group: codeql-${{ github.ref }}-${{ github.event_name }}
   cancel-in-progress: true
 
 jobs:
