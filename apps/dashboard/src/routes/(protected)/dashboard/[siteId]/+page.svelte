@@ -29,7 +29,12 @@
 	let loading = $state(false);
 	let errorMessage = $state<string | null>(null);
 
-	async function loadStats(siteId: string, from: string, to: string, metric: StatMetric): Promise<void> {
+	async function loadStats(
+		siteId: string,
+		from: string,
+		to: string,
+		metric: StatMetric
+	): Promise<void> {
 		loading = true;
 		errorMessage = null;
 		try {
@@ -68,7 +73,11 @@
 	// re-use the pageview data rows summarized by date as placeholder until a dedicated /api/pages endpoint exists)
 	const topPages = $derived(
 		pageviewStats
-			? pageviewStats.data.map((d) => ({ path: d.date, pageviews: d.pageviews, visitors: d.visitors }))
+			? pageviewStats.data.map((d) => ({
+					path: d.date,
+					pageviews: d.pageviews,
+					visitors: d.visitors
+				}))
 			: []
 	);
 </script>
@@ -100,17 +109,20 @@
 						Start tracking by adding the snippet to your site:
 					</p>
 					<pre
-						class="mx-auto mt-4 max-w-lg rounded-lg bg-gray-100 p-4 text-left text-xs text-gray-700 overflow-x-auto"
-					>&lt;script src="https://your-host/snippet.js" data-site-id="{data.siteId}"&gt;&lt;/script&gt;</pre>
+						class="mx-auto mt-4 max-w-lg overflow-x-auto rounded-lg bg-gray-100 p-4 text-left text-xs text-gray-700">&lt;script src="https://your-host/snippet.js" data-site-id="{data.siteId}"&gt;&lt;/script&gt;</pre>
 				</div>
 			{:else if activeMetric === 'pageviews' && pageviewStats}
 				<div class="mb-6 grid grid-cols-2 gap-4 sm:grid-cols-3">
 					<div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-						<p class="text-3xl font-bold text-gray-800">{pageviewStats.totals.pageviews.toLocaleString()}</p>
+						<p class="text-3xl font-bold text-gray-800">
+							{pageviewStats.totals.pageviews.toLocaleString()}
+						</p>
 						<p class="text-sm text-gray-500">Pageviews</p>
 					</div>
 					<div class="rounded-xl border border-gray-200 bg-white p-4 shadow-sm">
-						<p class="text-3xl font-bold text-gray-800">{pageviewStats.totals.visitors.toLocaleString()}</p>
+						<p class="text-3xl font-bold text-gray-800">
+							{pageviewStats.totals.visitors.toLocaleString()}
+						</p>
 						<p class="text-sm text-gray-500">Visitors</p>
 					</div>
 				</div>

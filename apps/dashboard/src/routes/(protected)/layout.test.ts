@@ -36,7 +36,7 @@ const { load } = await import('./+layout.js');
 describe('(protected) layout load', () => {
 	beforeEach(() => vi.clearAllMocks());
 
-	it('AC-04-01: redirects to /login when user is not authenticated', async () => {
+	it('AC-02-01 / AC-04-01: redirects to /login when user is not authenticated', async () => {
 		// authStateCallback was called with null (signed out) at import time
 		let thrown: unknown;
 		try {

@@ -26,22 +26,19 @@ const { fetchSites, createSite, fetchStats, dateRangePreset, isoDate } = await i
 describe('dateRangePreset', () => {
 	it('returns correct span for 7d', () => {
 		const { from, to } = dateRangePreset('7d');
-		const diff =
-			(new Date(to).getTime() - new Date(from).getTime()) / (1000 * 60 * 60 * 24);
+		const diff = (new Date(to).getTime() - new Date(from).getTime()) / (1000 * 60 * 60 * 24);
 		expect(diff).toBe(6);
 	});
 
 	it('returns correct span for 30d', () => {
 		const { from, to } = dateRangePreset('30d');
-		const diff =
-			(new Date(to).getTime() - new Date(from).getTime()) / (1000 * 60 * 60 * 24);
+		const diff = (new Date(to).getTime() - new Date(from).getTime()) / (1000 * 60 * 60 * 24);
 		expect(diff).toBe(29);
 	});
 
 	it('returns correct span for 90d', () => {
 		const { from, to } = dateRangePreset('90d');
-		const diff =
-			(new Date(to).getTime() - new Date(from).getTime()) / (1000 * 60 * 60 * 24);
+		const diff = (new Date(to).getTime() - new Date(from).getTime()) / (1000 * 60 * 60 * 24);
 		expect(diff).toBe(89);
 	});
 });
@@ -71,7 +68,9 @@ describe('fetchSites', () => {
 	});
 
 	it('AC-02-06: throws on non-ok response', async () => {
-		mockFetch.mockResolvedValueOnce(new Response('', { status: 500, statusText: 'Internal Server Error' }));
+		mockFetch.mockResolvedValueOnce(
+			new Response('', { status: 500, statusText: 'Internal Server Error' })
+		);
 		await expect(fetchSites()).rejects.toThrow('API error 500');
 	});
 });
@@ -103,7 +102,12 @@ describe('fetchStats', () => {
 		const statsResponse = { metric: 'pageviews', data: [], totals: { pageviews: 0, visitors: 0 } };
 		mockFetch.mockResolvedValueOnce(jsonResponse(statsResponse));
 
-		await fetchStats({ siteId: 'site-1', from: '2024-01-01', to: '2024-01-07', metric: 'pageviews' });
+		await fetchStats({
+			siteId: 'site-1',
+			from: '2024-01-01',
+			to: '2024-01-07',
+			metric: 'pageviews'
+		});
 
 		const call = mockFetch.mock.calls[0][0] as string;
 		expect(call).toContain('/api/stats');

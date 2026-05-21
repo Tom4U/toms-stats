@@ -29,7 +29,9 @@
 		{:else if data.sites.length === 0}
 			<div class="rounded-xl border border-dashed border-gray-300 p-12 text-center">
 				<p class="text-gray-500">No sites yet.</p>
-				<a href="/sites/new" class="mt-2 inline-block text-sm font-medium text-indigo-600 hover:underline"
+				<a
+					href="/sites/new"
+					class="mt-2 inline-block text-sm font-medium text-indigo-600 hover:underline"
 					>Add your first site →</a
 				>
 			</div>

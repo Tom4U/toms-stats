@@ -24,8 +24,17 @@
 	}
 
 	onMount(async () => {
-		const { Chart, LineController, LineElement, PointElement, LinearScale, CategoryScale, Legend, Tooltip, Filler } =
-			await import('chart.js');
+		const {
+			Chart,
+			LineController,
+			LineElement,
+			PointElement,
+			LinearScale,
+			CategoryScale,
+			Legend,
+			Tooltip,
+			Filler
+		} = await import('chart.js');
 
 		Chart.register(
 			LineController,

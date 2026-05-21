@@ -15,10 +15,12 @@ describe('/dashboard load', () => {
 	beforeEach(() => vi.clearAllMocks());
 
 	it('AC-02-02: returns sites with 7-day stats', async () => {
-		const sites = [
-			{ id: 's1', name: 'Site 1', domain: 'site1.com', createdAt: '2024-01-01' }
-		];
-		const stats = { metric: 'pageviews' as const, data: [], totals: { pageviews: 42, visitors: 10 } };
+		const sites = [{ id: 's1', name: 'Site 1', domain: 'site1.com', createdAt: '2024-01-01' }];
+		const stats = {
+			metric: 'pageviews' as const,
+			data: [],
+			totals: { pageviews: 42, visitors: 10 }
+		};
 
 		mockFetchSites.mockResolvedValueOnce(sites);
 		mockFetchPageviewStats.mockResolvedValueOnce(stats);
@@ -46,6 +48,18 @@ describe('/dashboard load', () => {
 
 		expect(result.error).toBe('Network error');
 		expect(result.sites).toHaveLength(0);
+	});
+
+	it('AC-02-05: load fn resolves (loading state is managed by the caller; error field null on success)', async () => {
+		const sites = [{ id: 's1', name: 'Site 1', domain: 'site1.com', createdAt: '2024-01-01' }];
+		const stats = { metric: 'pageviews' as const, data: [], totals: { pageviews: 0, visitors: 0 } };
+
+		mockFetchSites.mockResolvedValueOnce(sites);
+		mockFetchPageviewStats.mockResolvedValueOnce(stats);
+
+		// load() promise resolving signals that the loading state ends
+		const result = await load();
+		expect(result.error).toBeNull();
 	});
 
 	it('AC-02-02: falls back to zero stats when per-site stats fetch fails', async () => {

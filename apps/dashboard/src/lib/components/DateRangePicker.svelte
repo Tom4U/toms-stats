@@ -32,10 +32,7 @@
 		selected = preset;
 		if (preset === 'custom') return;
 		const today = isoDate(new Date());
-		const range =
-			preset === 'today'
-				? { from: today, to: today }
-				: dateRangePreset(preset);
+		const range = preset === 'today' ? { from: today, to: today } : dateRangePreset(preset);
 		onchange(range);
 	}
 
@@ -50,7 +47,7 @@
 			onclick={() => selectPreset(preset.value)}
 			class="rounded-md px-3 py-1.5 text-sm font-medium transition {selected === preset.value
 				? 'bg-indigo-600 text-white'
-				: 'bg-white text-gray-600 border border-gray-300 hover:bg-gray-50'}"
+				: 'border border-gray-300 bg-white text-gray-600 hover:bg-gray-50'}"
 		>
 			{preset.label}
 		</button>

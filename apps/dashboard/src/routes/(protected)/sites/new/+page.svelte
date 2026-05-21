@@ -54,28 +54,32 @@
 			</div>
 		{/if}
 
-		<form onsubmit={submit} class="rounded-xl border border-gray-200 bg-white p-6 shadow-sm space-y-4">
+		<form
+			onsubmit={submit}
+			class="space-y-4 rounded-xl border border-gray-200 bg-white p-6 shadow-sm"
+		>
 			<div>
-				<label for="site-name" class="block text-sm font-medium text-gray-700 mb-1">Site name</label>
+				<label for="site-name" class="mb-1 block text-sm font-medium text-gray-700">Site name</label
+				>
 				<input
 					id="site-name"
 					type="text"
 					bind:value={name}
 					placeholder="My Blog"
 					required
-					class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+					class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
 				/>
 			</div>
 
 			<div>
-				<label for="site-domain" class="block text-sm font-medium text-gray-700 mb-1">Domain</label>
+				<label for="site-domain" class="mb-1 block text-sm font-medium text-gray-700">Domain</label>
 				<input
 					id="site-domain"
 					type="text"
 					bind:value={domain}
 					placeholder="example.com"
 					required
-					class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:outline-none focus:ring-1 focus:ring-indigo-500"
+					class="w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500 focus:outline-none"
 				/>
 				<p class="mt-1 text-xs text-gray-500">Without protocol, e.g. example.com</p>
 			</div>

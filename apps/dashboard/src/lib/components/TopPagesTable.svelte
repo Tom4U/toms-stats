@@ -13,7 +13,7 @@
 
 <div class="overflow-x-auto rounded-xl border border-gray-200">
 	<table class="w-full text-sm">
-		<thead class="bg-gray-50 text-left text-xs font-medium uppercase tracking-wide text-gray-500">
+		<thead class="bg-gray-50 text-left text-xs font-medium tracking-wide text-gray-500 uppercase">
 			<tr>
 				<th class="px-4 py-2">Page</th>
 				<th class="px-4 py-2 text-right">Pageviews</th>

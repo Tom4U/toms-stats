@@ -6,7 +6,12 @@
 		title: 'Components/SiteCard',
 		component: SiteCard,
 		args: {
-			site: { id: 'site-1', name: 'My Blog', domain: 'example.com', createdAt: '2024-01-01T00:00:00Z' },
+			site: {
+				id: 'site-1',
+				name: 'My Blog',
+				domain: 'example.com',
+				createdAt: '2024-01-01T00:00:00Z'
+			},
 			pageviews: 1234,
 			visitors: 567
 		}
