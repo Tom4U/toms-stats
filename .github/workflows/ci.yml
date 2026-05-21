@@ -109,7 +109,7 @@ jobs:
       - name: Check spec coupling
         run: node scripts/check-spec-coupling.mjs
         env:
-          GITHUB_BASE_REF: ${{ github.base_ref }}
+          GITHUB_BASE_REF: ${{ github.base_ref || 'main' }}
           SPEC_COUPLING_EXEMPT: ${{ contains(github.event.pull_request.labels.*.name, 'no-spec-change') && '1' || '0' }}
 
   lint-tracker:

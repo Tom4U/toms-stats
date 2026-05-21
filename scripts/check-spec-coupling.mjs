@@ -16,7 +16,7 @@ if (exempt) {
 
 // In CI, GITHUB_BASE_REF is set to the target branch (e.g. "main").
 // Locally, fall back to "main".
-const base = process.env['GITHUB_BASE_REF'] ?? 'main'
+const base = process.env['GITHUB_BASE_REF'] || 'main'
 
 // Reject branch names that aren't valid git refs to avoid command injection.
 if (!/^[\w./-]+$/.test(base)) {
