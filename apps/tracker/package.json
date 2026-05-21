@@ -10,7 +10,8 @@
     "lint": "eslint src",
     "test": "vitest run",
     "test:coverage": "vitest run --coverage",
-    "test:watch": "vitest"
+    "test:watch": "vitest",
+    "test:mutation": "stryker run"
   },
   "dependencies": {
     "@tom4u-stats/shared": "*",
@@ -20,6 +21,9 @@
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^5.0.1",
+    "@stryker-mutator/core": "^9.6.1",
+    "@stryker-mutator/typescript-checker": "^9.6.1",
+    "@stryker-mutator/vitest-runner": "^9.6.1",
     "@types/node": "^24",
     "@types/qrcode": "^1.5.6",
     "@vitest/coverage-v8": "^4.1.6",
