@@ -7,8 +7,19 @@ on:
   pull_request:
     branches:
       - main
+    paths-ignore:
+      - '**/*.md'
+      - 'specs/**'
+      - 'LICENSE'
+      - '.github/PULL_REQUEST_TEMPLATE.md'
+      - '**/package.json'
+      - '.release-please-manifest.json'
   schedule:
     - cron: '0 8 * * 1'
+
+concurrency:
+  group: codeql-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   analyze:
