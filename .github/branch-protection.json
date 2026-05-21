@@ -4,7 +4,9 @@
     "contexts": [
       "Markdown Lint",
       "Spec ↔ Test Audit",
-      "Lint & Type Check",
+      "Spec-Coupling Gate",
+      "Lint Tracker",
+      "Lint Dashboard",
       "Unit Tests",
       "Integration Tests (Firebase Emulators)",
       "Build",
