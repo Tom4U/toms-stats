@@ -54,6 +54,24 @@ jobs:
       - name: Lint dashboard
         run: npm -w apps/dashboard run lint
 
+  spec-coupling:
+    name: Spec-Coupling Gate
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '24'
+
+      - name: Check spec coupling
+        run: node scripts/check-spec-coupling.mjs
+        env:
+          GITHUB_BASE_REF: ${{ github.base_ref }}
+          SPEC_COUPLING_EXEMPT: ${{ contains(github.event.pull_request.labels.*.name, 'no-spec-change') && '1' || '0' }}
+
   test-unit:
     name: Unit Tests
     runs-on: ubuntu-latest
