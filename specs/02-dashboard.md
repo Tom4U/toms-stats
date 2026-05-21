@@ -1,6 +1,6 @@
 # Spec 02 — Dashboard
 
-## Status: Draft
+## Status: Implemented
 
 ## Overview
 

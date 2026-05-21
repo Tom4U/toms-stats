@@ -38,7 +38,7 @@ describe('authStore', () => {
 		expect(signInWithPopup).toHaveBeenCalledOnce();
 	});
 
-	it('AC-04-05: signOut calls firebase signOut', async () => {
+	it('AC-02-08 / AC-04-05: signOut calls firebase signOut (NavBar sign-out clears Firebase session)', async () => {
 		const { signOut } = await import('firebase/auth');
 		await authStore.signOut();
 		expect(signOut).toHaveBeenCalledOnce();
