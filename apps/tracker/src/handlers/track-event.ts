@@ -333,4 +333,4 @@ export async function handleTrackEvent(
 // Firebase Cloud Function export
 // ---------------------------------------------------------------------------
 
-export const trackEvent = onRequest((req, res) => handleTrackEvent(req, res))
+export const trackEvent = onRequest({ region: 'europe-west3' }, (req, res) => handleTrackEvent(req, res))

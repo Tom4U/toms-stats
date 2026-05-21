@@ -49,7 +49,7 @@ jobs:
           SA_FILE=$(mktemp)
           trap 'rm -f "$SA_FILE"' EXIT
           printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$SA_FILE"
-          GOOGLE_APPLICATION_CREDENTIALS="$SA_FILE" npx --ignore-scripts firebase-tools@15.18.0 deploy --only functions --project toms-stats
+          GOOGLE_APPLICATION_CREDENTIALS="$SA_FILE" npx --ignore-scripts firebase-tools@15.18.0 deploy --only functions --force --project toms-stats
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@v0.10.0

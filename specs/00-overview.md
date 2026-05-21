@@ -54,7 +54,7 @@ User Browser
   │
   ▼
 Tracking Snippet
-  │  POST https://[region]-[project].cloudfunctions.net/api/event
+  │  POST https://europe-west3-[project].cloudfunctions.net/api/event
   │  Body: { siteId, type, url, referrer?, name?, props? }
   │  (no cookies, no fingerprinting on client side)
   │

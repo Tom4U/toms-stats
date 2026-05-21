@@ -305,4 +305,4 @@ export async function handleGetStats(
 // Firebase Cloud Function export
 // ---------------------------------------------------------------------------
 
-export const getStats = onRequest((req, res) => handleGetStats(req, res))
+export const getStats = onRequest({ region: 'europe-west3' }, (req, res) => handleGetStats(req, res))
