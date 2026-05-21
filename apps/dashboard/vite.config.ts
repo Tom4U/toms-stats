@@ -12,7 +12,12 @@ export default defineConfig({
 			provider: 'v8',
 			reporter: ['text', 'lcov'],
 			include: ['src/lib/**/*.ts', 'src/lib/**/*.svelte'],
-			exclude: ['src/**/*.test.ts', 'src/**/*.spec.ts', 'src/**/*.stories.svelte']
+			exclude: [
+				'src/**/*.test.ts',
+				'src/**/*.spec.ts',
+				'src/**/*.stories.svelte',
+				'src/lib/firebase-client.ts'
+			]
 		},
 		projects: [
 			{

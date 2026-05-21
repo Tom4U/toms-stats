@@ -1,7 +1,6 @@
 <script lang="ts">
-	import { signInWithPopup } from 'firebase/auth';
 	import { goto } from '$app/navigation';
-	import { auth, googleProvider } from '$lib/firebase-client.js';
+	import { signInWithGoogle } from '$lib/auth.store.js';
 
 	let error = $state<string | null>(null);
 	let loading = $state(false);
@@ -10,9 +9,9 @@
 		error = null;
 		loading = true;
 		try {
-			await signInWithPopup(auth, googleProvider);
+			await signInWithGoogle();
 			// eslint-disable-next-line svelte/no-navigation-without-resolve -- goto is awaited; rule false-positive in async event handlers
-		await goto('/dashboard');
+			await goto('/dashboard');
 		} catch (err) {
 			error = err instanceof Error ? err.message : 'Sign-in failed';
 		} finally {

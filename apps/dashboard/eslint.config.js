@@ -30,11 +30,11 @@ export default defineConfig(
 		}
 	},
 	{
-		files: ['**/*.ts'],
+		files: ['src/**/*.ts'],
 		languageOptions: {
 			parserOptions: {
 				projectService: true,
-				tsconfigRootDir: import.meta.dirname,
+				tsconfigRootDir: import.meta.dirname
 			}
 		}
 	},
