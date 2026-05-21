@@ -32,6 +32,14 @@ AC:
 - [ ] `.spec-audit-allowlist.json` entries removed for ACs now covered by tests (or N/A)
 - [ ] Backlog issue closed / updated if a roadmap or tech-debt item was resolved (or N/A)
 
+## Test changes
+
+<!-- Required if any existing test was modified (not just added). -->
+<!-- Leave blank / delete section if no existing tests were touched. -->
+
+- [ ] No existing tests were modified (only new tests added or no test changes at all)
+- [ ] Existing tests modified — reason: <!-- spec changed: AC-xx / fachliche Begründung -->
+
 ## Notes for reviewer
 
 <!-- Anything that isn't obvious from the diff. -->
