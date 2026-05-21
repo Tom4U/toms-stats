@@ -131,3 +131,22 @@ describe('fetchStats', () => {
 		expect(secondCall).toContain('to=2024-01-31');
 	});
 });
+
+describe('fetchPageviewStats', () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	it('returns a PageviewStatsResponse typed result', async () => {
+		const statsResponse = {
+			metric: 'pageviews',
+			data: [{ date: '2024-01-01', pageviews: 5, visitors: 3 }],
+			totals: { pageviews: 5, visitors: 3 }
+		};
+		mockFetch.mockResolvedValueOnce(jsonResponse(statsResponse));
+
+		const { fetchPageviewStats } = await import('./api.js');
+		const result = await fetchPageviewStats('site-1', '2024-01-01', '2024-01-01');
+
+		expect(result.metric).toBe('pageviews');
+		expect(result.totals.pageviews).toBe(5);
+	});
+});
