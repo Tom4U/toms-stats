@@ -16,7 +16,9 @@ async function authHeaders(): Promise<HeadersInit> {
 async function apiFetch<T>(path: string, init?: RequestInit): Promise<T> {
 	const res = await fetch(path, init);
 	if (!res.ok) {
-		throw new Error(`API error ${res.status}: ${res.statusText}`);
+		const body = await res.json().catch(() => null);
+		const message = (body as { error?: string } | null)?.error ?? res.statusText;
+		throw new Error(`API error ${res.status}: ${message}`);
 	}
 	return res.json() as Promise<T>;
 }

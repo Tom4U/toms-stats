@@ -49,6 +49,7 @@
 <div class="flex flex-wrap items-center gap-2">
 	{#each presets as preset (preset.value)}
 		<button
+			type="button"
 			onclick={() => selectPreset(preset.value)}
 			class="rounded-md px-3 py-1.5 text-sm font-medium transition {selected === preset.value
 				? 'bg-indigo-600 text-white'
@@ -74,8 +75,10 @@
 				aria-label="To date"
 			/>
 			<button
+				type="button"
 				onclick={applyCustom}
-				class="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700"
+				disabled={!customFrom || !customTo || customTo < customFrom}
+				class="rounded-md bg-indigo-600 px-3 py-1.5 text-sm font-medium text-white hover:bg-indigo-700 disabled:opacity-50"
 			>
 				Apply
 			</button>

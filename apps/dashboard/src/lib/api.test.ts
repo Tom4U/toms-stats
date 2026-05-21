@@ -67,11 +67,20 @@ describe('fetchSites', () => {
 		expect(result).toEqual(sites);
 	});
 
-	it('AC-02-06: throws on non-ok response', async () => {
+	it('AC-02-06: throws with statusText on non-ok response without JSON body', async () => {
 		mockFetch.mockResolvedValueOnce(
 			new Response('', { status: 500, statusText: 'Internal Server Error' })
 		);
-		await expect(fetchSites()).rejects.toThrow('API error 500');
+		await expect(fetchSites()).rejects.toThrow('API error 500: Internal Server Error');
+	});
+
+	it('AC-02-06: throws with structured error message from JSON body', async () => {
+		mockFetch.mockResolvedValueOnce(
+			jsonResponse({ error: 'from must be a date in YYYY-MM-DD format' }, 400)
+		);
+		await expect(fetchSites()).rejects.toThrow(
+			'API error 400: from must be a date in YYYY-MM-DD format'
+		);
 	});
 });
 

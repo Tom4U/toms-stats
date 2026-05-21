@@ -27,6 +27,7 @@
 <div class="flex gap-1 overflow-x-auto border-b border-gray-200 pb-0" role="tablist">
 	{#each tabs as tab (tab.value)}
 		<button
+			type="button"
 			role="tab"
 			aria-selected={selected === tab.value}
 			onclick={() => onchange(tab.value)}
