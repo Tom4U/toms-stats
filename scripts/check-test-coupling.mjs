@@ -2,6 +2,8 @@
 // SDD/TDD-Gate: feat/fix commits that touch source files must also stage tests.
 // Additionally: if existing test lines are modified (not just added), the commit
 // message must carry a "Test-Change-Reason: <text>" trailer explaining why.
+// Gate 3 (strict split, opt-in via STATS_STRICT_TEST_SPLIT=1): a commit may not
+// simultaneously modify existing test lines AND non-test source files.
 // Runs in the commit-msg hook so we can read the commit type from the message.
 
 import { execFileSync } from 'node:child_process'
@@ -66,11 +68,11 @@ if (sourceChanged.length > 0 && !testChanged) {
   process.exit(1)
 }
 
-// Gate 2: if existing test lines were deleted/modified, require a trailer.
 if (!testChanged) {
   process.exit(0)
 }
 
+// Compute deletions per staged test file (numstat: <added>\t<deleted>\t<file>).
 const testFiles = stagedFiles.filter((file) => testPattern.test(file))
 const numstat = execFileSync(
   'git',
@@ -78,7 +80,6 @@ const numstat = execFileSync(
   { encoding: 'utf8' },
 )
 
-// numstat format: <added>\t<deleted>\t<file>
 const hasModifiedTestLines = numstat
   .split('\n')
   .filter(Boolean)
@@ -92,7 +93,30 @@ if (!hasModifiedTestLines) {
   process.exit(0)
 }
 
-// Existing test lines were removed/replaced — require a trailer.
+// Gate 3 (opt-in): block commits that mix modified tests with non-test source changes.
+// Set STATS_STRICT_TEST_SPLIT=1 to activate. Remove the guard once the team has adapted.
+const strictSplit = process.env['STATS_STRICT_TEST_SPLIT'] === '1'
+const nonTestSourceChanged = sourceChanged.filter((file) => !testPattern.test(file))
+
+if (strictSplit && nonTestSourceChanged.length > 0) {
+  console.error('')
+  console.error('Test-split gate (strict): modified test lines and source changes must be in separate commits.')
+  console.error('')
+  console.error('Non-test source files staged alongside modified tests:')
+  for (const file of nonTestSourceChanged) {
+    console.error(`  - ${file}`)
+  }
+  console.error('')
+  console.error('Split into two commits:')
+  console.error('  1. refactor(test): <reason>  — modified tests only (no source changes)')
+  console.error('  2. feat: <feature>            — source changes with new/added tests only')
+  console.error('')
+  console.error('Or disable strict mode: unset STATS_STRICT_TEST_SPLIT and use Gate 2 (trailer).')
+  console.error('')
+  process.exit(1)
+}
+
+// Gate 2: existing test lines modified without strict split — require a trailer.
 const hasTrailer = /^Test-Change-Reason: .+/m.test(message)
 
 if (hasTrailer) {
