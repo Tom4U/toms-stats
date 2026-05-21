@@ -6,7 +6,7 @@
 // SPEC_COUPLING_EXEMPT=1 (for local hotfix branches where the spec update
 // is tracked in a separate PR that must land first).
 
-import { execSync } from 'node:child_process'
+import { execFileSync } from 'node:child_process'
 
 const exempt = process.env['SPEC_COUPLING_EXEMPT'] === '1'
 if (exempt) {
@@ -18,20 +18,41 @@ if (exempt) {
 // Locally, fall back to "main".
 const base = process.env['GITHUB_BASE_REF'] ?? 'main'
 
+// Reject branch names that aren't valid git refs to avoid command injection.
+if (!/^[\w./-]+$/.test(base)) {
+  console.error(`check-spec-coupling: invalid base ref "${base}" — aborting.`)
+  process.exit(1)
+}
+
+const isCI = Boolean(process.env['CI'])
+
 let changedFiles
 try {
-  changedFiles = execSync(`git diff --name-only origin/${base}...HEAD`, { encoding: 'utf8' })
+  changedFiles = execFileSync(
+    'git',
+    ['diff', '--name-only', `origin/${base}...HEAD`],
+    { encoding: 'utf8' },
+  )
     .split('\n')
     .filter(Boolean)
 } catch {
-  // If we can't determine changed files (e.g. shallow clone), skip.
-  console.log(`check-spec-coupling: could not diff against origin/${base} — skipping.`)
+  if (isCI) {
+    // In CI the base ref must be fetchable — fail hard so the gate can't be
+    // silently bypassed by a misconfigured checkout (e.g. missing fetch-depth: 0).
+    console.error(
+      `check-spec-coupling: could not diff against origin/${base}.` +
+      ' Ensure fetch-depth: 0 in the checkout step.',
+    )
+    process.exit(1)
+  }
+  console.log(`check-spec-coupling: could not diff against origin/${base} — skipping locally.`)
   process.exit(0)
 }
 
 const sourcePattern = /^(apps|packages)\/[^/]+\/src\/.+\.(ts|svelte)$/
 const specPattern = /^specs\//
-const testPattern = /\.(test|spec)\.(ts|svelte|js|mjs)$/
+// Matches both filename suffixes (*.test.ts) and test directories (/tests?/, /spec/).
+const testPattern = /\.(test|spec)\.(ts|svelte|js|mjs)$|\/(tests?|spec)\//
 
 const sourceChanged = changedFiles.filter(
   f => sourcePattern.test(f) && !testPattern.test(f),
@@ -42,14 +63,21 @@ if (sourceChanged.length === 0 || specChanged) {
   process.exit(0)
 }
 
-// Check whether all feat/fix commits on this branch touch only test files
-// (pure test additions don't need a spec change).
+// Check whether the branch contains any feat/fix commits.
+// Pure test-only additions or chore/refactor branches don't need a spec change.
 let commits
 try {
-  commits = execSync(`git log --format=%s origin/${base}...HEAD`, { encoding: 'utf8' })
+  commits = execFileSync(
+    'git',
+    ['log', '--format=%s', `origin/${base}...HEAD`],
+    { encoding: 'utf8' },
+  )
     .split('\n')
     .filter(Boolean)
 } catch {
+  if (isCI) {
+    process.exit(1)
+  }
   process.exit(0)
 }
 
