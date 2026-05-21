@@ -2,7 +2,9 @@ import type { TokenVerifier } from '../handlers/get-stats.js'
 
 // Token values for use in get-stats tests. The mock verifier below maps each
 // token directly to a uid — so the token string IS the uid.
-export const OWNER_TOKEN = 'owner-uid-test'
+// OWNER_TOKEN mirrors process.env.OWNER_UID set in vitest.setup.ts so both
+// stay in sync without duplicating the literal value.
+export const OWNER_TOKEN = process.env['OWNER_UID'] ?? 'owner-uid-test'
 export const NON_OWNER_TOKEN = 'some-other-user'
 // Sentinel rejected by the mock verifier — simulates a cryptographically invalid
 // Firebase ID token without relying on the real Auth service.
