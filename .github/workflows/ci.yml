@@ -4,6 +4,12 @@ on:
   pull_request:
     branches:
       - main
+  # release-please pushes directly via API — no pull_request event fires.
+  # Adding push here ensures CI runs (and required checks are satisfied) on
+  # every release-please branch update.
+  push:
+    branches:
+      - release-please--branches--main
 
 concurrency:
   group: ci-${{ github.ref }}
