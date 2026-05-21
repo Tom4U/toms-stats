@@ -32,14 +32,13 @@ jobs:
           script: |
             const run = context.payload.workflow_run;
 
-            // Prefer the PRs attached directly to the workflow_run payload.
+            // workflow_run payload contains PR stubs — draft status is not reliable there.
+            // Always resolve the PR number from the payload, then fetch fresh state via REST.
             const linkedPrs = run.pull_requests ?? [];
-            const pr = linkedPrs.length > 0
-              ? linkedPrs[0]
-              : null;
+            let prNumber = linkedPrs.length > 0 ? linkedPrs[0].number : null;
 
-            if (!pr) {
-              // Fallback: query open PRs for this branch (single-target edge case).
+            if (!prNumber) {
+              // Fallback: query open PRs for this branch (cross-fork or edge case).
               const { data: prs } = await github.rest.pulls.list({
                 owner: context.repo.owner,
                 repo: context.repo.repo,
@@ -50,15 +49,19 @@ jobs:
                 core.info('No open PR found for branch ' + run.head_branch);
                 return null;
               }
-              const fallback = prs[0];
-              core.setOutput('pr_number', fallback.number);
-              core.setOutput('is_draft', fallback.draft ? 'true' : 'false');
-              return fallback.number;
+              prNumber = prs[0].number;
             }
 
-            core.setOutput('pr_number', pr.number);
-            core.setOutput('is_draft', pr.draft ? 'true' : 'false');
-            return pr.number;
+            // Fetch fresh PR state so draft status is accurate.
+            const { data: fresh } = await github.rest.pulls.get({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              pull_number: prNumber,
+            });
+
+            core.setOutput('pr_number', String(prNumber));
+            core.setOutput('is_draft', fresh.draft ? 'true' : 'false');
+            return prNumber;
 
       - name: Handle CI non-success — post comment with failed jobs
         if: >
@@ -106,7 +109,7 @@ jobs:
             const prNumber = parseInt('${{ steps.find-pr.outputs.pr_number }}');
             const isDraft = '${{ steps.find-pr.outputs.is_draft }}' === 'true';
 
-            // Tick the "CI green" checkbox in the PR body.
+            // Single REST call for body (checkbox tick) and node_id (undraft mutation).
             const { data: pr } = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -129,18 +132,13 @@ jobs:
 
             // Undraft the PR via GraphQL (REST has no undraft endpoint).
             if (isDraft) {
-              const { data: fresh } = await github.rest.pulls.get({
-                owner: context.repo.owner,
-                repo: context.repo.repo,
-                pull_number: prNumber,
-              });
               await github.graphql(`
                 mutation($id: ID!) {
                   markPullRequestReadyForReview(input: { pullRequestId: $id }) {
                     pullRequest { isDraft }
                   }
                 }
-              `, { id: fresh.node_id });
+              `, { id: pr.node_id });
               core.info('PR marked ready for review.');
             } else {
               core.info('PR was already ready for review.');
