@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.2](https://github.com/Tom4U/toms-stats/compare/toms-stats-v0.4.1...toms-stats-v0.4.2) (2026-05-21)
+
+
+### Bug Fixes
+
+* **ci:** use PAT for release-please to trigger downstream CI ([#59](https://github.com/Tom4U/toms-stats/issues/59)) ([7adcebd](https://github.com/Tom4U/toms-stats/commit/7adcebdb848bcbb82741abc897d7000d7aaeb6f3))
+* **deploy:** deploy Cloud Functions alongside Hosting ([#56](https://github.com/Tom4U/toms-stats/issues/56)) ([cd336cb](https://github.com/Tom4U/toms-stats/commit/cd336cb3d3d37f4a4efd9717732d29a4d3fd2567))
+
 ## [0.4.1](https://github.com/Tom4U/toms-stats/compare/toms-stats-v0.4.0...toms-stats-v0.4.1) (2026-05-21)
 
 
