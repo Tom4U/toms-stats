@@ -52,7 +52,7 @@ jobs:
           GOOGLE_APPLICATION_CREDENTIALS="$SA_FILE" npx --ignore-scripts firebase-tools@15.18.0 deploy --only functions --force --project toms-stats
 
       - name: Deploy to Firebase Hosting
-        uses: FirebaseExtended/action-hosting-deploy@v0.10.0
+        uses: FirebaseExtended/action-hosting-deploy@500ac625ca2dd40cbd15f7659af953801858032a # v0.10.0+node24
         with:
           repoToken: ${{ secrets.GITHUB_TOKEN }}
           firebaseServiceAccount: ${{ secrets.FIREBASE_SERVICE_ACCOUNT }}
