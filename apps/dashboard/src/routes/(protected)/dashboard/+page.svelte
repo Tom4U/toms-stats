@@ -1,34 +1,48 @@
 <script lang="ts">
-	import { goto } from '$app/navigation';
-	import { authStore } from '$lib/auth.store.js';
+	import NavBar from '$lib/components/NavBar.svelte';
+	import SiteCard from '$lib/components/SiteCard.svelte';
+	import ErrorBanner from '$lib/components/ErrorBanner.svelte';
+	import type { DashboardData } from './+page.js';
 
-	const user = authStore;
-
-	async function signOut(): Promise<void> {
-		await authStore.signOut();
-		// eslint-disable-next-line svelte/no-navigation-without-resolve -- goto is awaited; rule false-positive in async event handlers
-		await goto('/login');
+	interface Props {
+		data: DashboardData;
 	}
+	let { data }: Props = $props();
 </script>
 
 <div class="min-h-screen bg-gray-50">
-	<nav class="flex items-center justify-between border-b border-gray-200 bg-white px-6 py-3">
-		<span class="font-semibold text-gray-800">toms-stats</span>
-		<div class="flex items-center gap-4">
-			{#if $user}
-				<span class="text-sm text-gray-600">{$user.email}</span>
-			{/if}
-			<button
-				onclick={signOut}
-				class="rounded-md bg-gray-100 px-3 py-1.5 text-sm font-medium text-gray-700 hover:bg-gray-200"
-			>
-				Sign out
-			</button>
-		</div>
-	</nav>
+	<NavBar />
 
-	<main class="p-6">
-		<h1 class="text-2xl font-semibold text-gray-800">Dashboard</h1>
-		<p class="mt-2 text-gray-500">Analytics coming soon.</p>
+	<main class="mx-auto max-w-5xl p-6">
+		<div class="mb-6 flex items-center justify-between">
+			<h1 class="text-2xl font-semibold text-gray-800">Sites</h1>
+			<a
+				href="/sites/new"
+				class="rounded-lg bg-indigo-600 px-4 py-2 text-sm font-medium text-white hover:bg-indigo-700"
+			>
+				Add site
+			</a>
+		</div>
+
+		{#if data.error}
+			<ErrorBanner message={data.error} />
+		{:else if data.sites.length === 0}
+			<div class="rounded-xl border border-dashed border-gray-300 p-12 text-center">
+				<p class="text-gray-500">No sites yet.</p>
+				<a href="/sites/new" class="mt-2 inline-block text-sm font-medium text-indigo-600 hover:underline"
+					>Add your first site →</a
+				>
+			</div>
+		{:else}
+			<div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+				{#each data.sites as site (site.id)}
+					<SiteCard
+						{site}
+						pageviews={data.statsBySiteId[site.id]?.totals.pageviews ?? 0}
+						visitors={data.statsBySiteId[site.id]?.totals.visitors ?? 0}
+					/>
+				{/each}
+			</div>
+		{/if}
 	</main>
 </div>
