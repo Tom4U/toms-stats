@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.1](https://github.com/Tom4U/toms-stats/compare/toms-stats-v0.4.0...toms-stats-v0.4.1) (2026-05-21)
+
+
+### Bug Fixes
+
+* **ci:** pass base_ref fallback for push-triggered spec-coupling gate ([#55](https://github.com/Tom4U/toms-stats/issues/55)) ([3ac8fe2](https://github.com/Tom4U/toms-stats/commit/3ac8fe2bdce6c89f655214552461ba761704609b))
+* **deploy:** inject VITE_FIREBASE_* vars into dashboard build step ([#52](https://github.com/Tom4U/toms-stats/issues/52)) ([17535ad](https://github.com/Tom4U/toms-stats/commit/17535adee67d88b7fe852a292243fec5a37c44d2))
+
 ## [0.4.0](https://github.com/Tom4U/toms-stats/compare/toms-stats-v0.3.0...toms-stats-v0.4.0) (2026-05-21)
 
 

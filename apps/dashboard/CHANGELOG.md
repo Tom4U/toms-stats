@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.2.1](https://github.com/Tom4U/toms-stats/compare/dashboard-v0.2.0...dashboard-v0.2.1) (2026-05-21)
+
+
+### Bug Fixes
+
+* **deploy:** inject VITE_FIREBASE_* vars into dashboard build step ([#52](https://github.com/Tom4U/toms-stats/issues/52)) ([17535ad](https://github.com/Tom4U/toms-stats/commit/17535adee67d88b7fe852a292243fec5a37c44d2))
+
 ## [0.2.0](https://github.com/Tom4U/toms-stats/compare/dashboard-v0.1.0...dashboard-v0.2.0) (2026-05-21)
 
 
