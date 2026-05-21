@@ -1,8 +1,8 @@
 name: PR Auto-Ready
 
 # Fires when the CI workflow completes on a PR branch.
-# On success: tick the "CI green" checkbox, undraft the PR, resolve Copilot threads.
-# On failure: post a comment listing which jobs failed.
+# On success: tick the "CI green" checkbox and undraft the PR.
+# On non-success: post a comment listing which jobs failed/cancelled.
 
 on:
   workflow_run:
@@ -11,16 +11,18 @@ on:
 
 permissions:
   pull-requests: write
+  issues: write
   contents: read
 
 jobs:
   auto-ready:
     name: Auto-ready on green CI
     runs-on: ubuntu-latest
-    # Only act on PR-triggered CI runs (head_branch != main/release-*)
+    # Only act on PR-triggered CI runs; exclude main and release branches.
     if: >
       github.event.workflow_run.event == 'pull_request' &&
-      github.event.workflow_run.head_branch != 'main'
+      github.event.workflow_run.head_branch != 'main' &&
+      !startsWith(github.event.workflow_run.head_branch, 'release-')
 
     steps:
       - name: Find PR for this workflow run
@@ -29,35 +31,68 @@ jobs:
         with:
           script: |
             const run = context.payload.workflow_run;
-            const { data: prs } = await github.rest.pulls.list({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              state: 'open',
-              head: `${context.repo.owner}:${run.head_branch}`,
-            });
-            if (prs.length === 0) {
-              core.info('No open PR found for branch ' + run.head_branch);
-              return null;
+
+            // Prefer the PRs attached directly to the workflow_run payload.
+            const linkedPrs = run.pull_requests ?? [];
+            const pr = linkedPrs.length > 0
+              ? linkedPrs[0]
+              : null;
+
+            if (!pr) {
+              // Fallback: query open PRs for this branch (single-target edge case).
+              const { data: prs } = await github.rest.pulls.list({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                state: 'open',
+                head: `${context.repo.owner}:${run.head_branch}`,
+              });
+              if (prs.length === 0) {
+                core.info('No open PR found for branch ' + run.head_branch);
+                return null;
+              }
+              const fallback = prs[0];
+              core.setOutput('pr_number', fallback.number);
+              core.setOutput('is_draft', fallback.draft ? 'true' : 'false');
+              return fallback.number;
             }
-            const pr = prs[0];
+
             core.setOutput('pr_number', pr.number);
             core.setOutput('is_draft', pr.draft ? 'true' : 'false');
             return pr.number;
 
-      - name: Handle CI failure — post comment
+      - name: Handle CI non-success — post comment with failed jobs
         if: >
           steps.find-pr.outputs.pr_number != '' &&
-          github.event.workflow_run.conclusion == 'failure'
+          github.event.workflow_run.conclusion != 'success'
         uses: actions/github-script@v9.0.0
         with:
           script: |
             const prNumber = parseInt('${{ steps.find-pr.outputs.pr_number }}');
-            const runUrl = context.payload.workflow_run.html_url;
+            const run = context.payload.workflow_run;
+            const conclusion = run.conclusion;
+
+            // Fetch jobs to list which ones failed/cancelled.
+            const { data: jobsData } = await github.rest.actions.listJobsForWorkflowRun({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              run_id: run.id,
+            });
+
+            const failedJobs = jobsData.jobs.filter(
+              (j) => j.conclusion !== 'success' && j.conclusion !== 'skipped'
+            );
+
+            const jobList = failedJobs.length > 0
+              ? failedJobs.map((j) => `- **${j.name}** (${j.conclusion})`).join('\n')
+              : '_No individual job details available._';
+
             await github.rest.issues.createComment({
               owner: context.repo.owner,
               repo: context.repo.repo,
               issue_number: prNumber,
-              body: `### CI failed\n\nOne or more jobs did not pass. [View run](${runUrl})\n\n` +
+              body: `### CI ${conclusion}\n\n` +
+                    `[View run](${run.html_url})\n\n` +
+                    `**Jobs that did not pass:**\n${jobList}\n\n` +
                     `The PR remains in Draft until CI is green.`,
             });
 
@@ -71,7 +106,7 @@ jobs:
             const prNumber = parseInt('${{ steps.find-pr.outputs.pr_number }}');
             const isDraft = '${{ steps.find-pr.outputs.is_draft }}' === 'true';
 
-            // Tick the "CI green" checkbox in the PR body
+            // Tick the "CI green" checkbox in the PR body.
             const { data: pr } = await github.rest.pulls.get({
               owner: context.repo.owner,
               repo: context.repo.repo,
@@ -79,10 +114,7 @@ jobs:
             });
 
             const tickedBody = pr.body
-              ? pr.body.replace(
-                  /- \[ \] CI green/,
-                  '- [x] CI green',
-                )
+              ? pr.body.replace(/- \[ \] CI green/, '- [x] CI green')
               : pr.body;
 
             if (tickedBody !== pr.body) {
@@ -95,7 +127,7 @@ jobs:
               core.info('CI green checkbox ticked.');
             }
 
-            // Undraft the PR via GraphQL (REST has no undraft endpoint)
+            // Undraft the PR via GraphQL (REST has no undraft endpoint).
             if (isDraft) {
               const { data: fresh } = await github.rest.pulls.get({
                 owner: context.repo.owner,
@@ -123,35 +155,45 @@ jobs:
           script: |
             const prNumber = parseInt('${{ steps.find-pr.outputs.pr_number }}');
 
-            // Fetch all review threads
-            const { repository } = await github.graphql(`
-              query($owner: String!, $repo: String!, $pr: Int!) {
-                repository(owner: $owner, name: $repo) {
-                  pullRequest(number: $pr) {
-                    reviewThreads(first: 100) {
-                      nodes {
-                        id
-                        isResolved
-                        comments(first: 5) {
-                          nodes { author { login } body }
+            // Fetch all review threads with pagination.
+            let threads = [];
+            let cursor = null;
+            do {
+              const result = await github.graphql(`
+                query($owner: String!, $repo: String!, $pr: Int!, $cursor: String) {
+                  repository(owner: $owner, name: $repo) {
+                    pullRequest(number: $pr) {
+                      reviewThreads(first: 100, after: $cursor) {
+                        pageInfo { hasNextPage endCursor }
+                        nodes {
+                          id
+                          isResolved
+                          comments(first: 5) {
+                            nodes { author { login } body }
+                          }
                         }
                       }
                     }
                   }
                 }
-              }
-            `, {
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              pr: prNumber,
-            });
+              `, {
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                pr: prNumber,
+                cursor,
+              });
 
-            const threads = repository.pullRequest.reviewThreads.nodes;
-            const copilotThreads = threads.filter(t =>
-              !t.isResolved &&
-              t.comments.nodes.some(c =>
-                c.author?.login === 'copilot-pull-request-reviewer'
-              )
+              const page = result.repository.pullRequest.reviewThreads;
+              threads = threads.concat(page.nodes);
+              cursor = page.pageInfo.hasNextPage ? page.pageInfo.endCursor : null;
+            } while (cursor);
+
+            const copilotThreads = threads.filter(
+              (t) =>
+                !t.isResolved &&
+                t.comments.nodes.some(
+                  (c) => c.author?.login === 'copilot-pull-request-reviewer'
+                )
             );
 
             core.info(`Found ${copilotThreads.length} open Copilot thread(s).`);
@@ -169,6 +211,8 @@ jobs:
               `, { id: thread.id });
             }
 
-            if (copilotThreads.length > 0) {
-              core.info('All Copilot threads resolved.');
-            }
+            core.info(
+              copilotThreads.length > 0
+                ? 'All Copilot threads resolved.'
+                : 'No open Copilot threads found.'
+            );
