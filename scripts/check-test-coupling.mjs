@@ -4,7 +4,7 @@
 // message must carry a "Test-Change-Reason: <text>" trailer explaining why.
 // Runs in the commit-msg hook so we can read the commit type from the message.
 
-import { execSync } from 'node:child_process'
+import { execFileSync } from 'node:child_process'
 import { readFileSync } from 'node:fs'
 
 const msgFile = process.argv[2]
@@ -35,9 +35,11 @@ if (exemptTypes.has(type)) {
   process.exit(0)
 }
 
-const stagedFiles = execSync('git diff --cached --name-only --diff-filter=ACMR', {
-  encoding: 'utf8',
-})
+const stagedFiles = execFileSync(
+  'git',
+  ['diff', '--cached', '--name-only', '--diff-filter=ACMR'],
+  { encoding: 'utf8' },
+)
   .split('\n')
   .filter(Boolean)
 
@@ -70,10 +72,11 @@ if (!testChanged) {
 }
 
 const testFiles = stagedFiles.filter((file) => testPattern.test(file))
-const quoted = testFiles.map(f => `"${f}"`).join(' ')
-const numstat = execSync(`git diff --cached --numstat -- ${quoted}`, {
-  encoding: 'utf8',
-})
+const numstat = execFileSync(
+  'git',
+  ['diff', '--cached', '--numstat', '--', ...testFiles],
+  { encoding: 'utf8' },
+)
 
 // numstat format: <added>\t<deleted>\t<file>
 const hasModifiedTestLines = numstat
@@ -100,7 +103,7 @@ console.error('')
 console.error('Test-immutability gate: existing test lines were modified.')
 console.error('')
 console.error('Tests may only change when the corresponding spec also changed, or when')
-console.error('there is a fachliche reason. Add a trailer to your commit message:')
+console.error('there is a documented domain reason. Add a trailer to your commit message:')
 console.error('')
 console.error('  Test-Change-Reason: <why these existing tests had to change>')
 console.error('')
