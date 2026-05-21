@@ -11,12 +11,10 @@ AC:
 
 ## Test changes
 
-<!-- Required only when an existing test was modified (not just added).
-     Delete section if no existing tests were touched. -->
+<!-- Tick one. Modifying existing tests requires a documented reason. Adding new tests is always allowed. -->
 
 - [ ] No existing tests were modified
-- [ ] Existing tests modified — reason:
-  <!-- spec changed: AC-xx / documented domain reason -->
+- [ ] Existing tests modified — reason: <!-- spec changed: AC-xx / or documented domain reason -->
 
 ## CI
 
