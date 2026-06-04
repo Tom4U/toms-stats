@@ -53,16 +53,16 @@ Run tests locally before pushing:
 
 ```bash
 # All workspaces
-npm test
+pnpm test
 
 # With Firebase emulators (integration tests)
-npx firebase emulators:exec "npm test"
+pnpm exec firebase emulators:exec "pnpm --filter @tom4u-stats/tracker run test"
 
 # Dashboard component & Storybook tests
-npm -w apps/dashboard run test:unit
+pnpm --filter @tom4u-stats/dashboard run test:unit
 
 # E2E
-npm -w apps/dashboard run test:e2e
+pnpm --filter @tom4u-stats/dashboard run test:e2e
 ```
 
 ## Commits
@@ -79,7 +79,7 @@ chore(deps): bump firebase-admin to 13.9
 ## Code Style
 
 - TypeScript strict, no `any`, explicit return types.
-- Format with Prettier: `npm -w apps/dashboard run format`
-- Lint: `npm -w apps/dashboard run lint`
+- Format with Prettier: `pnpm --filter @tom4u-stats/dashboard run format`
+- Lint: `pnpm --filter @tom4u-stats/dashboard run lint`
 - File length soft limit: ~200 lines — split if longer.
 - Comments only for non-obvious WHY — never WHAT.

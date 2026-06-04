@@ -1,5 +1,5 @@
 #!/usr/bin/env sh
 set -e
 
-npx --no -- commitlint --edit "$1"
+pnpm exec commitlint --edit "$1"
 node scripts/check-test-coupling.mjs "$1"

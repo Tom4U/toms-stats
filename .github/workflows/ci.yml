@@ -69,7 +69,7 @@ jobs:
               - 'packages/shared/tsconfig*.json'
               - 'firestore.rules'
               - 'firestore.indexes.json'
-              - 'package-lock.json'
+              - 'pnpm-lock.yaml'
               - 'tsconfig*.json'
               - '.github/workflows/ci.yml'
 
@@ -81,16 +81,20 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: pnpm/action-setup@v6.0.8
+        with:
+          version: 11.5.1
+
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci --ignore-scripts
+        run: pnpm install --frozen-lockfile
 
       - name: Lint Markdown
-        run: npm run lint:md
+        run: pnpm run lint:md
 
   spec-coupling:
     name: Spec-Coupling Gate
@@ -120,22 +124,26 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: pnpm/action-setup@v6.0.8
+        with:
+          version: 11.5.1
+
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci --ignore-scripts
+        run: pnpm install --frozen-lockfile
 
       - name: Build shared package
-        run: npm -w packages/shared run build
+        run: pnpm --filter @tom4u-stats/shared run build
 
       - name: Type check tracker
-        run: npm -w apps/tracker run check
+        run: pnpm --filter @tom4u-stats/tracker run check
 
       - name: Lint tracker
-        run: npm -w apps/tracker run lint
+        run: pnpm --filter @tom4u-stats/tracker run lint
 
   lint-dashboard:
     name: Lint Dashboard
@@ -145,22 +153,26 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: pnpm/action-setup@v6.0.8
+        with:
+          version: 11.5.1
+
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci --ignore-scripts
+        run: pnpm install --frozen-lockfile
 
       - name: Build shared package
-        run: npm -w packages/shared run build
+        run: pnpm --filter @tom4u-stats/shared run build
 
       - name: Type check dashboard
-        run: npm -w apps/dashboard run check
+        run: pnpm --filter @tom4u-stats/dashboard run check
 
       - name: Lint dashboard
-        run: npm -w apps/dashboard run lint
+        run: pnpm --filter @tom4u-stats/dashboard run lint
 
   test-unit:
     name: Unit Tests
@@ -170,22 +182,26 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: pnpm/action-setup@v6.0.8
+        with:
+          version: 11.5.1
+
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci --ignore-scripts
+        run: pnpm install --frozen-lockfile
 
       - name: Run shared package tests
-        run: npm -w packages/shared run test
+        run: pnpm --filter @tom4u-stats/shared run test
 
       - name: Run dashboard unit tests (server)
-        run: npm -w apps/dashboard run test:unit -- --project=server --run --reporter=github-actions
+        run: pnpm --filter @tom4u-stats/dashboard run test:unit -- --project=server --run --reporter=github-actions
 
       - name: Generate dashboard coverage
-        run: npm -w apps/dashboard run test:coverage
+        run: pnpm --filter @tom4u-stats/dashboard run test:coverage
 
       - name: Upload dashboard coverage
         uses: actions/upload-artifact@v7
@@ -205,13 +221,17 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: pnpm/action-setup@v6.0.8
+        with:
+          version: 11.5.1
+
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci --ignore-scripts
+        run: pnpm install --frozen-lockfile
 
       - uses: actions/setup-java@v5.2.0
         with:
@@ -219,13 +239,13 @@ jobs:
           java-version: '21'
 
       - name: Build shared package
-        run: npm -w packages/shared run build
+        run: pnpm --filter @tom4u-stats/shared run build
 
       - name: Build tracker
-        run: npm -w apps/tracker run build
+        run: pnpm --filter @tom4u-stats/tracker run build
 
       - name: Run tracker tests with emulators
-        run: ./node_modules/.bin/firebase emulators:exec --project demo-toms-stats --only firestore,auth,functions "npm -w apps/tracker run test:coverage"
+        run: ./node_modules/.bin/firebase emulators:exec --project demo-toms-stats --only firestore,auth,functions "pnpm --filter @tom4u-stats/tracker run test:coverage"
 
       - name: Upload tracker coverage
         uses: actions/upload-artifact@v7
@@ -246,22 +266,26 @@ jobs:
     steps:
       - uses: actions/checkout@v6
 
+      - uses: pnpm/action-setup@v6.0.8
+        with:
+          version: 11.5.1
+
       - uses: actions/setup-node@v6
         with:
           node-version: '24'
-          cache: 'npm'
+          cache: 'pnpm'
 
       - name: Install dependencies
-        run: npm ci --ignore-scripts
+        run: pnpm install --frozen-lockfile
 
       - name: Build shared package
-        run: npm -w packages/shared run build
+        run: pnpm --filter @tom4u-stats/shared run build
 
       - name: Build tracker
-        run: npm -w apps/tracker run build
+        run: pnpm --filter @tom4u-stats/tracker run build
 
       - name: Build dashboard
-        run: npm -w apps/dashboard run build
+        run: pnpm --filter @tom4u-stats/dashboard run build
 
   sonarqube:
     name: SonarQube

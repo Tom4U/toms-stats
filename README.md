@@ -109,7 +109,8 @@ toms-stats/
 ├── specs/              # Spec Driven Development (source of truth)
 ├── firebase.json
 ├── firestore.rules
-└── package.json        # npm workspaces root
+├── pnpm-workspace.yaml # pnpm workspaces root
+└── package.json
 ```
 
 ---
@@ -119,7 +120,7 @@ toms-stats/
 ### Prerequisites
 
 - Node.js >= 24
-- Firebase CLI: `npm install -g firebase-tools`
+- pnpm >= 11 (`corepack enable` then `corepack prepare pnpm@11.5.1 --activate`)
 - A Firebase project (Blaze plan required for Cloud Functions)
 
 ### 1. Clone and install
@@ -127,15 +128,15 @@ toms-stats/
 ```bash
 git clone https://github.com/tom4u/toms-stats.git
 cd toms-stats
-npm install
+pnpm install
 ```
 
 ### 2. Firebase setup
 
 ```bash
-npx firebase login
-npx firebase use toms-stats          # or create: firebase projects:create toms-stats
-npx firebase functions:secrets:set VISITOR_SALT
+pnpm exec firebase login
+pnpm exec firebase use toms-stats          # or create: firebase projects:create toms-stats
+pnpm exec firebase functions:secrets:set VISITOR_SALT
 ```
 
 Enable in Firebase Console:
@@ -153,10 +154,10 @@ Replace `OWNER_UID` in [firestore.rules](firestore.rules) with your actual Fireb
 
 ```bash
 # Terminal 1: Firebase emulators
-npx firebase emulators:start
+pnpm exec firebase emulators:start
 
 # Terminal 2: Dashboard dev server
-npm -w apps/dashboard run dev
+pnpm --filter @tom4u-stats/dashboard run dev
 ```
 
 Dashboard runs at `http://localhost:5173`. Emulator UI at `http://localhost:4000`.
@@ -168,23 +169,23 @@ Dashboard runs at `http://localhost:5173`. Emulator UI at `http://localhost:4000
 ### Commands
 
 ```bash
-npm install                               # install all workspace deps
-npm test                                  # run all tests
-npm run build                             # build all workspaces
-npm run check                             # type-check all workspaces
+pnpm install                                              # install all workspace deps
+pnpm test                                                 # run all tests
+pnpm build                                                # build all workspaces
+pnpm check                                                # type-check all workspaces
 
 # Tracker (Cloud Functions)
-npm -w apps/tracker run build             # compile TypeScript → lib/
-npm -w apps/tracker run test              # unit + integration tests
+pnpm --filter @tom4u-stats/tracker run build              # compile TypeScript → lib/
+pnpm --filter @tom4u-stats/tracker run test               # unit + integration tests
 
 # Dashboard
-npm -w apps/dashboard run dev             # dev server :5173
-npm -w apps/dashboard run storybook       # Storybook :6006
-npm -w apps/dashboard run build-storybook # build Storybook docs
-npm -w apps/dashboard run test            # vitest (unit + component + storybook)
-npm -w apps/dashboard run test:e2e        # Playwright E2E tests
-npm -w apps/dashboard run check           # svelte-check + tsc
-npm -w apps/dashboard run lint            # ESLint + Prettier check
+pnpm --filter @tom4u-stats/dashboard run dev              # dev server :5173
+pnpm --filter @tom4u-stats/dashboard run storybook        # Storybook :6006
+pnpm --filter @tom4u-stats/dashboard run build-storybook  # build Storybook docs
+pnpm --filter @tom4u-stats/dashboard run test             # vitest (unit + component + storybook)
+pnpm --filter @tom4u-stats/dashboard run test:e2e         # Playwright E2E tests
+pnpm --filter @tom4u-stats/dashboard run check            # svelte-check + tsc
+pnpm --filter @tom4u-stats/dashboard run lint             # ESLint + Prettier check
 ```
 
 ### Development Principles

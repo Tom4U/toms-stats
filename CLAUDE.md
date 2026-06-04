@@ -44,7 +44,7 @@ GitHub Pages.
 `apps/tracker` (CF, TS) · `apps/dashboard` (SvelteKit+Tailwind+Storybook) ·
 `packages/shared` (`@tom4u-stats/shared` types) · `specs/00..04` (SDD source of truth) ·
 `.github/workflows/` (ci, deploy, storybook-pages, npm-publish) ·
-root npm-workspaces `package.json` · `firestore.rules` · `firestore.indexes.json`.
+root pnpm-workspaces (`pnpm-workspace.yaml` + `package.json`) · `firestore.rules` · `firestore.indexes.json`.
 
 ## SDD / AC-IDs
 
@@ -63,12 +63,12 @@ story before page wiring.
 ## Commands
 
 ```bash
-npm install | npm test | npm run build | npm run check     # root, all workspaces
-npx firebase emulators:start                                # required for integration tests
-npx firebase emulators:exec "npm test"
-npm -w apps/tracker run build|test|test:watch
-npm -w apps/dashboard run dev|build|test:unit|test:e2e|check|lint|format
-npm -w apps/dashboard run storybook|build-storybook
+pnpm install | pnpm test | pnpm build | pnpm check              # root, all workspaces
+pnpm exec firebase emulators:start                              # required for integration tests
+pnpm exec firebase emulators:exec "pnpm --filter @tom4u-stats/tracker run test"
+pnpm --filter @tom4u-stats/tracker run build|test|test:watch
+pnpm --filter @tom4u-stats/dashboard run dev|build|test:unit|test:e2e|check|lint|format
+pnpm --filter @tom4u-stats/dashboard run storybook|build-storybook
 ```
 
 Pre-commit hooks: `husky` (via root `prepare`), `lint-staged` (ESLint+markdownlint),
@@ -95,7 +95,7 @@ Full schema → `specs/01-tracking-api.md`.
 | `FIREBASE_SERVICE_ACCOUNT` | GH secret (deploy.yml) | Firebase Console → Service accounts → JSON |
 | `SONAR_TOKEN` | GH secret (ci.yml) | SonarCloud → Account → Security → Tokens |
 
-`npm-publish.yml` uses npm Trusted Publishing (OIDC, no secret).
+`npm-publish.yml` uses npm Trusted Publishing (OIDC, no secret) via pnpm publish.
 One-time Firebase setup: `firebase login` → `projects:create toms-stats` → `use toms-stats`
 → Console enable Firestore(Native)/Auth(Google)/Hosting/Functions(Blaze) →
 `firebase functions:secrets:set VISITOR_SALT`.
