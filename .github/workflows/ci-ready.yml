@@ -105,6 +105,7 @@ jobs:
           github.event.workflow_run.conclusion == 'success'
         uses: actions/github-script@v9.0.0
         with:
+          github-token: ${{ secrets.RELEASE_PLEASE_PAT }}
           script: |
             const prNumber = parseInt('${{ steps.find-pr.outputs.pr_number }}');
             const isDraft = '${{ steps.find-pr.outputs.is_draft }}' === 'true';
