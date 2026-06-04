@@ -21,7 +21,10 @@
     "rewrites": [
       {
         "source": "/api/**",
-        "function": "tracker"
+        "function": {
+          "functionId": "tracker",
+          "region": "europe-west3"
+        }
       },
       {
         "source": "**",

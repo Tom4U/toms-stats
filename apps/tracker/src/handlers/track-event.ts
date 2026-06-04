@@ -1,6 +1,5 @@
 import { createHash, randomUUID } from 'node:crypto'
 import { getFirestore, FieldValue } from 'firebase-admin/firestore'
-import { onRequest } from 'firebase-functions/v2/https'
 import type { DeviceType, EventType } from '@tom4u-stats/shared'
 
 // ---------------------------------------------------------------------------
@@ -328,9 +327,3 @@ export async function handleTrackEvent(
 
   res.sendStatus(204)
 }
-
-// ---------------------------------------------------------------------------
-// Firebase Cloud Function export
-// ---------------------------------------------------------------------------
-
-export const trackEvent = onRequest({ region: 'europe-west3' }, (req, res) => handleTrackEvent(req, res))
