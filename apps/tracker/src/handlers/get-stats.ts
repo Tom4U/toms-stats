@@ -1,6 +1,5 @@
 import { getAuth } from 'firebase-admin/auth'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
-import { onRequest } from 'firebase-functions/v2/https'
 import type {
   StatMetric,
   PageviewStatsResponse,
@@ -300,9 +299,3 @@ export async function handleGetStats(
     res.status(200).json(buildLabelCountResponse(metric, events))
   }
 }
-
-// ---------------------------------------------------------------------------
-// Firebase Cloud Function export
-// ---------------------------------------------------------------------------
-
-export const getStats = onRequest({ region: 'europe-west3' }, (req, res) => handleGetStats(req, res))

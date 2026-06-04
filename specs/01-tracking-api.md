@@ -61,6 +61,11 @@ See [03-qr-codes.md](03-qr-codes.md).
 
 ## Endpoints
 
+All `/api/*` routes are served by a **single Cloud Function named `tracker`** (matching the
+`firebase.json` Hosting rewrite `/api/** → tracker`). The function dispatches to the correct
+handler based on the request method and path. Unknown paths return `404`; a known path with
+an unsupported method returns `405`.
+
 ### POST `/api/event` — Track Event
 
 Receives a tracking event from the browser snippet. No authentication required.
@@ -388,3 +393,27 @@ Auth-protected. Returns all registered sites.
 **Given** 5 events with 3 distinct `visitorHash` values for the same siteId and date
 **When** the stats endpoint is queried with `metric=pageviews`
 **Then** `totals.visitors = 3`.
+
+### AC-28: Router dispatches POST /api/event to the track-event handler
+
+**Given** a valid `POST /api/event` request routed through the `tracker` function
+**When** the router runs
+**Then** the track-event handler is invoked and the response is HTTP 204.
+
+### AC-29: Router dispatches GET /api/stats to the stats handler
+
+**Given** a `GET /api/stats` request with valid owner authentication routed through `tracker`
+**When** the router runs
+**Then** the stats handler is invoked and the response is HTTP 200.
+
+### AC-30: Unknown path → 404
+
+**Given** a request to a path not in the dispatch table (e.g. `GET /api/sites`, `GET /api/unknown`)
+**When** the router runs
+**Then** it returns HTTP 404.
+
+### AC-31: Known path, wrong method → 405
+
+**Given** a request to a known path with an unsupported method (e.g. `DELETE /api/event`)
+**When** the router runs
+**Then** it returns HTTP 405.
