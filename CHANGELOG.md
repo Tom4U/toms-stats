@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.3](https://github.com/Tom4U/toms-stats/compare/toms-stats-v0.4.2...toms-stats-v0.4.3) (2026-06-04)
+
+
+### Bug Fixes
+
+* **ci:** replace node_modules/.bin/firebase with pnpm exec ([#66](https://github.com/Tom4U/toms-stats/issues/66)) ([5ffbe42](https://github.com/Tom4U/toms-stats/commit/5ffbe4250a6bec2d6ca24ce1cdcf199f86db4855))
+
 ## [0.4.2](https://github.com/Tom4U/toms-stats/compare/toms-stats-v0.4.1...toms-stats-v0.4.2) (2026-05-21)
 
 
