@@ -106,9 +106,9 @@ Versions are managed via [release-please](https://github.com/googleapis/release-
 **No manual version bumps** — release-please owns all `version` fields.
 Bump logic lives in the global `release-flow` skill; project-specific details:
 
-- Tags per component: `shared-v*`, `tracker-v*`, `toms-stats-v*` (umbrella, root `package.json`)
+- Tags per component: `shared-v*`, `tracker-v*`, `dashboard-v*`, `toms-stats-v*` (umbrella, root `package.json`)
 - `npm-publish.yml` fires on `shared-v*` tags → publishes `@tom4u-stats/shared` via npm Trusted Publishing (OIDC)
-- `deploy.yml` fires on `toms-stats-v*` / `tracker-v*` tags → Firebase deploy
+- `deploy.yml` fires on push to `main` (paths-ignore: `**.md`, `specs/**`, `LICENSE`) → Firebase deploy
 
 ## Naming
 
