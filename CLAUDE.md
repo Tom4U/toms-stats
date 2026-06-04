@@ -100,6 +100,16 @@ One-time Firebase setup: `firebase login` → `projects:create toms-stats` → `
 → Console enable Firestore(Native)/Auth(Google)/Hosting/Functions(Blaze) →
 `firebase functions:secrets:set VISITOR_SALT`.
 
+## Release-Flow
+
+Versions are managed via [release-please](https://github.com/googleapis/release-please).
+**No manual version bumps** — release-please owns all `version` fields.
+Bump logic lives in the global `release-flow` skill; project-specific details:
+
+- Tags per component: `shared-v*`, `tracker-v*`, `toms-stats-v*` (umbrella, root `package.json`)
+- `npm-publish.yml` fires on `shared-v*` tags → publishes `@tom4u-stats/shared` via npm Trusted Publishing (OIDC)
+- `deploy.yml` fires on `toms-stats-v*` / `tracker-v*` tags → Firebase deploy
+
 ## Naming
 
 Files kebab-case · Types PascalCase · Functions camelCase · Firestore snake_case ·
