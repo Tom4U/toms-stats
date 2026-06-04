@@ -1,7 +1,7 @@
 ## Project Configuration
 
 - **Language**: TypeScript
-- **Package Manager**: npm
+- **Package Manager**: pnpm
 - **Add-ons**: prettier, eslint, vitest, playwright, tailwindcss, storybook, mcp
 
 ---
