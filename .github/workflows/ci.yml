@@ -245,7 +245,7 @@ jobs:
         run: pnpm --filter @tom4u-stats/tracker run build
 
       - name: Run tracker tests with emulators
-        run: ./node_modules/.bin/firebase emulators:exec --project demo-toms-stats --only firestore,auth,functions "pnpm --filter @tom4u-stats/tracker run test:coverage"
+        run: pnpm exec firebase emulators:exec --project demo-toms-stats --only firestore,auth,functions "pnpm --filter @tom4u-stats/tracker run test:coverage"
 
       - name: Upload tracker coverage
         uses: actions/upload-artifact@v7
