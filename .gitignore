@@ -38,3 +38,5 @@ Thumbs.db
 # Editor
 .vscode/settings.json
 *.local
+
+.mcp.json
