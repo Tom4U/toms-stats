@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.4.1](https://github.com/Tom4U/toms-stats/compare/tracker-v0.4.0...tracker-v0.4.1) (2026-06-05)
+
+
+### Bug Fixes
+
+* **tracker:** declare VISITOR_SALT and OWNER_UID secrets on tracker function ([#74](https://github.com/Tom4U/toms-stats/issues/74)) ([26aba1f](https://github.com/Tom4U/toms-stats/commit/26aba1ff21561803160e0386c802c52c6a44148c))
+
 ## [0.4.0](https://github.com/Tom4U/toms-stats/compare/tracker-v0.3.0...tracker-v0.4.0) (2026-06-05)
 
 
