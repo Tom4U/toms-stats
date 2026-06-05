@@ -81,4 +81,12 @@ export async function routeRequest(
   res.status(404).json({ error: 'Not found' })
 }
 
-export const tracker = onRequest({ region: TRACKER_REGION }, (req, res) => routeRequest(req, res))
+// v2 secrets must be declared here or Firebase will not inject them into
+// process.env at runtime — get-stats/sites read OWNER_UID, track-event reads
+// VISITOR_SALT. Missing declaration → fail-closed 500 on every protected route.
+const TRACKER_SECRETS = ['VISITOR_SALT', 'OWNER_UID'] as const
+
+export const tracker = onRequest(
+  { region: TRACKER_REGION, secrets: [...TRACKER_SECRETS] },
+  (req, res) => routeRequest(req, res),
+)
