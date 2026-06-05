@@ -52,14 +52,7 @@ jobs:
       - name: Inject OWNER_UID into Firestore rules
         env:
           OWNER_UID: ${{ secrets.OWNER_UID }}
-        run: |
-          if [ -z "$OWNER_UID" ]; then
-            echo "::error::OWNER_UID secret is not set — refusing to deploy rules with the placeholder" >&2
-            exit 1
-          fi
-          # Substitute the placeholder; fail if it was not present (rules drifted).
-          grep -q '__OWNER_UID__' firestore.rules || { echo "::error::__OWNER_UID__ placeholder missing from firestore.rules" >&2; exit 1; }
-          sed -i "s/__OWNER_UID__/${OWNER_UID}/g" firestore.rules
+        run: node scripts/substitute-owner-uid.mjs firestore.rules
 
       - name: Deploy Functions and Firestore rules
         run: |
