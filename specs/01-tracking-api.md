@@ -200,7 +200,9 @@ Authorization: Bearer <Firebase ID token>
 
 ### POST `/api/sites` — Register a Site
 
-Auth-protected. Creates a new site entry.
+Auth-protected. Creates a new site entry. `name` and `domain` are required, non-empty, and
+stored trimmed. `domain` must be a bare host (no scheme, path/slash, or internal whitespace;
+`example.com`, `sub.example.com`, `localhost`, optionally with `:port`).
 
 ```json
 { "name": "My Blog", "domain": "myblog.example.com" }
@@ -408,7 +410,7 @@ Auth-protected. Returns all registered sites.
 
 ### AC-30: Unknown path → 404
 
-**Given** a request to a path not in the dispatch table (e.g. `GET /api/sites`, `GET /api/unknown`)
+**Given** a request to a path not in the dispatch table (e.g. `GET /api/unknown`)
 **When** the router runs
 **Then** it returns HTTP 404.
 
@@ -417,3 +419,56 @@ Auth-protected. Returns all registered sites.
 **Given** a request to a known path with an unsupported method (e.g. `DELETE /api/event`)
 **When** the router runs
 **Then** it returns HTTP 405.
+
+### AC-32: GET /api/sites requires auth
+
+**Given** a `GET /api/sites` request with a missing or malformed `Authorization` header,
+an invalid Bearer token, or a token whose uid is not the owner
+**When** the function runs
+**Then** it returns HTTP 401 for the missing/malformed header and invalid token cases, and
+HTTP 403 when the token belongs to a non-owner uid.
+
+### AC-33: GET /api/sites returns all registered sites
+
+**Given** registered site documents in the `sites` collection and a valid owner token
+**When** `GET /api/sites` is called
+**Then** it returns HTTP 200 with a JSON array of `Site` objects, each shaped
+`{ id, name, domain, createdAt }` with `createdAt` an ISO-8601 string, ordered by
+`createdAt` ascending.
+
+### AC-34: POST /api/sites requires auth
+
+**Given** a `POST /api/sites` request with a missing or malformed `Authorization` header,
+an invalid Bearer token, or a non-owner uid
+**When** the function runs
+**Then** it returns HTTP 401 for the missing/malformed header and invalid token cases, and
+HTTP 403 when the token belongs to a non-owner uid.
+
+### AC-35: POST /api/sites creates a site
+
+**Given** a valid owner token and a body `{ "name": "...", "domain": "..." }`
+**When** `POST /api/sites` is called
+**Then** exactly one new document is created in the `sites` collection with a
+server-generated id and `createdAt`, and the response is HTTP 201 with the created `Site`.
+
+### AC-36: POST /api/sites with invalid payload → 400
+
+**Given** a valid owner token and a body missing `name` or `domain`, or with either as an
+empty string
+**When** `POST /api/sites` is called
+**Then** it returns HTTP 400 with a descriptive `error` field and creates no document.
+
+### AC-37: Non-GET/POST method on /api/sites → 405
+
+**Given** a request to `/api/sites` with a method other than `GET` or `POST` (e.g. `PUT`)
+**When** the router runs
+**Then** it returns HTTP 405.
+
+### AC-38: POST /api/sites with malformed domain → 400
+
+**Given** a valid owner token and a body whose `domain` is not a bare host — it contains a
+URL scheme (`http://`), a path or slash (`/`), or any internal whitespace
+**When** `POST /api/sites` is called
+**Then** it returns HTTP 400 with a descriptive `error` field and creates no document.
+A bare host (`example.com`, `sub.example.com`, `localhost`, optionally with a `:port`) is
+accepted.

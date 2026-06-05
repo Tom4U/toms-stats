@@ -149,7 +149,7 @@ describe('routeRequest', () => {
   })
 
   it('AC-30 — returns 404 for an unknown path', async () => {
-    const req = makeReq({ method: 'GET', path: '/api/sites' })
+    const req = makeReq({ method: 'GET', path: '/api/unknown' })
     const res = new MockResponse()
 
     await routeRequest(req, res)
@@ -162,6 +162,41 @@ describe('routeRequest', () => {
     const res = new MockResponse()
 
     await routeRequest(req, res)
+
+    expect(res.statusCode).toBe(405)
+  })
+
+  it('AC-01-33 — dispatches GET /api/sites to the list handler (200)', async () => {
+    const req = makeReq({ method: 'GET', path: '/api/sites', headers: ownerAuthHeader() })
+    const res = new MockResponse()
+
+    await routeRequest(req, res, mockVerifyToken)
+
+    expect(res.statusCode).toBe(200)
+    expect(Array.isArray(res.body)).toBe(true)
+  })
+
+  it('AC-01-35 — dispatches POST /api/sites to the create handler (201)', async () => {
+    const req = makeReq({
+      method: 'POST',
+      path: '/api/sites',
+      body: { name: 'Router Created', domain: 'router-created.example.com' },
+      headers: ownerAuthHeader(),
+    })
+    const res = new MockResponse()
+
+    await routeRequest(req, res, mockVerifyToken)
+
+    expect(res.statusCode).toBe(201)
+    const created = res.body as { id: string }
+    await db.collection('sites').doc(created.id).delete()
+  })
+
+  it('AC-01-37 — returns 405 for /api/sites with an unsupported method', async () => {
+    const req = makeReq({ method: 'PUT', path: '/api/sites', headers: ownerAuthHeader() })
+    const res = new MockResponse()
+
+    await routeRequest(req, res, mockVerifyToken)
 
     expect(res.statusCode).toBe(405)
   })
