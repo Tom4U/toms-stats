@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.5.1](https://github.com/Tom4U/toms-stats/compare/toms-stats-v0.5.0...toms-stats-v0.5.1) (2026-06-05)
+
+
+### Bug Fixes
+
+* **ci:** run CodeQL on every PR so the code_scanning ruleset is satisfied ([#79](https://github.com/Tom4U/toms-stats/issues/79)) ([e6b031f](https://github.com/Tom4U/toms-stats/commit/e6b031fde146887b1b229fb3af2fe7fba039412e))
+* **ci:** suffix real jobs with (run) so required checks resolve to one run ([#78](https://github.com/Tom4U/toms-stats/issues/78)) ([7b206dc](https://github.com/Tom4U/toms-stats/commit/7b206dce60470cb9b8c4caccf0bf85d1243ef943))
+* **tracker:** declare VISITOR_SALT and OWNER_UID secrets on tracker function ([#74](https://github.com/Tom4U/toms-stats/issues/74)) ([26aba1f](https://github.com/Tom4U/toms-stats/commit/26aba1ff21561803160e0386c802c52c6a44148c))
+
 ## [0.5.0](https://github.com/Tom4U/toms-stats/compare/toms-stats-v0.4.3...toms-stats-v0.5.0) (2026-06-05)
 
 
