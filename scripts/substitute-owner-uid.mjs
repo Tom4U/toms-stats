@@ -8,6 +8,7 @@
 // Firestore rule.
 
 import { readFileSync, writeFileSync } from 'node:fs'
+import { pathToFileURL } from 'node:url'
 
 const PLACEHOLDER = '__OWNER_UID__'
 
@@ -35,7 +36,9 @@ function main() {
   console.log(`Substituted ${PLACEHOLDER} in ${file}`)
 }
 
-const invokedDirectly = process.argv[1] && import.meta.url === `file://${process.argv[1].replace(/\\/g, '/')}`
+// pathToFileURL resolves relative argv[1] (e.g. `node scripts/foo.mjs`) against
+// cwd and normalises Windows separators — a raw string compare would no-op.
+const invokedDirectly = process.argv[1] && import.meta.url === pathToFileURL(process.argv[1]).href
 if (invokedDirectly) {
   try {
     main()
