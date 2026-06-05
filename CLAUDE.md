@@ -103,28 +103,8 @@ One-time Firebase setup: `firebase login` → `projects:create toms-stats` → `
 `firebase functions:secrets:set VISITOR_SALT` and `…:set OWNER_UID`.
 Both must also be declared in the `tracker` `onRequest({ secrets: [...] })` (router.ts) or
 Firebase will not inject them into `process.env` — see specs/04-auth.md AC-08.
-
-### One-time deploy provisioning (do before the first `deploy.yml` run)
-
-The CI deploy SA (`client_email` in `FIREBASE_SERVICE_ACCOUNT`,
-e.g. `firebase-adminsdk-…@<project>.iam.gserviceaccount.com`) and the project need this once
-— otherwise `deploy --only functions,firestore` fails with a cascade of `403`s.
-
-Run these with the [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) (`gcloud`)
-installed and authenticated as a principal with Firestore + IAM-admin rights
-(`gcloud auth login`), or from [Cloud Shell](https://shell.cloud.google.com) where `gcloud` is
-pre-installed. Set `PROJECT` and `SA` first:
-
-```bash
-gcloud services enable firestore.googleapis.com --project "$PROJECT"
-# (default) Firestore DB must exist — same region as the tracker function (europe-west3):
-gcloud firestore databases create --location=europe-west3 --type=firestore-native --project "$PROJECT"
-# Deploy-SA roles (functions/auth roles are already present on the Firebase admin SA):
-gcloud secrets add-iam-policy-binding VISITOR_SALT --project "$PROJECT" --member "serviceAccount:$SA" --role roles/secretmanager.admin
-gcloud secrets add-iam-policy-binding OWNER_UID    --project "$PROJECT" --member "serviceAccount:$SA" --role roles/secretmanager.admin
-gcloud projects add-iam-policy-binding "$PROJECT" --member "serviceAccount:$SA" --role roles/firebaserules.admin  # rules deploy
-gcloud projects add-iam-policy-binding "$PROJECT" --member "serviceAccount:$SA" --role roles/datastore.owner       # index deploy
-```
+One-time deploy provisioning (Firestore DB create + deploy-SA IAM roles) → README
+"Deploy provisioning".
 
 `secretmanager.admin` (not just `secretAccessor`) is required: firebase-tools calls
 `versions.get` **and** `secrets.setIamPolicy` (it grants the function runtime SA access).

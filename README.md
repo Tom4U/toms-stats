@@ -150,15 +150,36 @@ Enable in Firebase Console:
 - Firebase Hosting
 - Cloud Functions
 
-The `(default)` Firestore database must actually exist before the first deploy (enabling the
-API alone does not create it):
+#### Deploy provisioning (one-time, before the first CI deploy)
+
+The first `deploy.yml` run (`deploy --only functions,firestore`) needs the `(default)`
+Firestore database to exist and the CI deploy service account to hold a few IAM roles —
+otherwise it fails with a cascade of `403`s. Run the following with the
+[Google Cloud SDK](https://cloud.google.com/sdk/docs/install) (`gcloud`) installed and
+authenticated as a principal with Firestore + IAM-admin rights (`gcloud auth login`), or from
+[Cloud Shell](https://shell.cloud.google.com). Derive `PROJECT` and `SA` from your own
+environment — never commit concrete values:
 
 ```bash
-gcloud firestore databases create --location=europe-west3 --type=firestore-native --project toms-stats
-```
+PROJECT="$(gcloud config get-value project)"
+# SA = the deploy service account's client_email (from your FIREBASE_SERVICE_ACCOUNT JSON):
+#   jq -r .client_email < your-service-account.json
+# or pick the Firebase admin SDK account from the project:
+SA="$(gcloud iam service-accounts list --project "$PROJECT" --format='value(email)' | grep firebase-adminsdk)"
 
-The CI deploy service account also needs IAM roles for secrets, rules, and indexes — see the
-**One-time deploy provisioning** section in [CLAUDE.md](CLAUDE.md) for the exact `gcloud` grants.
+# (default) Firestore DB must exist — same region as the tracker function (europe-west3);
+# enabling the API alone does not create it:
+gcloud services enable firestore.googleapis.com --project "$PROJECT"
+gcloud firestore databases create --location=europe-west3 --type=firestore-native --project "$PROJECT"
+
+# Deploy-SA roles (the Firebase admin SDK SA already has the functions/auth roles):
+#   secretmanager.admin — firebase-tools needs versions.get AND secrets.setIamPolicy,
+#   not just secretAccessor.
+gcloud secrets add-iam-policy-binding VISITOR_SALT --project "$PROJECT" --member "serviceAccount:$SA" --role roles/secretmanager.admin
+gcloud secrets add-iam-policy-binding OWNER_UID    --project "$PROJECT" --member "serviceAccount:$SA" --role roles/secretmanager.admin
+gcloud projects add-iam-policy-binding "$PROJECT" --member "serviceAccount:$SA" --role roles/firebaserules.admin  # rules deploy
+gcloud projects add-iam-policy-binding "$PROJECT" --member "serviceAccount:$SA" --role roles/datastore.owner       # index deploy
+```
 
 ### 3. Configure the owner UID for Firestore rules
 
