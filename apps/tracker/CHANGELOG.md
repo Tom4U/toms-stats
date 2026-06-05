@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.5.0](https://github.com/Tom4U/toms-stats/compare/tracker-v0.4.1...tracker-v0.5.0) (2026-06-05)
+
+
+### Features
+
+* **qr:** QR code manager (AC-03-01..07) ([#83](https://github.com/Tom4U/toms-stats/issues/83)) ([cc61663](https://github.com/Tom4U/toms-stats/commit/cc616631d245542ded9787895ad2cc14dbea4273))
+
 ## [0.4.1](https://github.com/Tom4U/toms-stats/compare/tracker-v0.4.0...tracker-v0.4.1) (2026-06-05)
 
 
