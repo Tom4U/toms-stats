@@ -5,6 +5,7 @@ import { sveltekit } from '@sveltejs/kit/vite';
 
 export default defineConfig({
 	plugins: [tailwindcss(), sveltekit()],
+	optimizeDeps: { include: ['firebase/app', 'firebase/auth'] },
 	test: {
 		passWithNoTests: true,
 		expect: { requireAssertions: true },

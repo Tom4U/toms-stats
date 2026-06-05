@@ -5,23 +5,13 @@ import type { QrCode } from '@tom4u-stats/shared';
 import Page from './+page.svelte';
 
 // ---------------------------------------------------------------------------
-// Break the firebase-client dependency chain (NavBar → auth.store → firebase).
+// Stub the SvelteKit runtime and NavBar so the browser test runner can import
+// +page.svelte without the full SvelteKit server context.
 // ---------------------------------------------------------------------------
-vi.mock('firebase/auth', () => ({
-	getAuth: vi.fn(() => ({})),
-	GoogleAuthProvider: vi.fn(),
-	onAuthStateChanged: vi.fn((_auth: unknown, cb: (u: null) => void) => {
-		cb(null);
-		return () => undefined;
-	}),
-	signInWithPopup: vi.fn(),
-	signOut: vi.fn()
-}));
-
-vi.mock('$lib/firebase-client.js', () => ({
-	auth: {},
-	googleProvider: {}
-}));
+vi.mock('$app/navigation', () => ({ goto: vi.fn() }));
+// NavBar requires firebase/auth at runtime; stub with a no-op Svelte 5 component function.
+// Svelte 5 runes-mode components are plain functions, not classes.
+vi.mock('$lib/components/NavBar.svelte', () => ({ default: () => undefined }));
 
 // ---------------------------------------------------------------------------
 // Mock API so tests never hit a real network.
