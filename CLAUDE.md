@@ -103,6 +103,12 @@ One-time Firebase setup: `firebase login` → `projects:create toms-stats` → `
 `firebase functions:secrets:set VISITOR_SALT` and `…:set OWNER_UID`.
 Both must also be declared in the `tracker` `onRequest({ secrets: [...] })` (router.ts) or
 Firebase will not inject them into `process.env` — see specs/04-auth.md AC-08.
+One-time deploy provisioning (Firestore DB create + deploy-SA IAM roles) → README
+"Deploy provisioning".
+
+`secretmanager.admin` (not just `secretAccessor`) is required: firebase-tools calls
+`versions.get` **and** `secrets.setIamPolicy` (it grants the function runtime SA access).
+Plus the `OWNER_UID` **GitHub Actions** secret for the rules substitution (`gh secret set OWNER_UID`).
 
 ## Release-Flow
 
