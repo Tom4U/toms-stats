@@ -362,6 +362,39 @@ describe('handleCreateQrCode / handleListQrCodes / handleDeleteQrCode', () => {
   })
 
   // -------------------------------------------------------------------------
+  // Branch coverage: validateCreate(null) and missing siteId on GET
+  // -------------------------------------------------------------------------
+  it('returns 400 when request body is null', async () => {
+    const res = new MockResponse()
+    await handleCreateQrCode(
+      makeReq({ method: 'POST', body: null, headers: ownerAuthHeader() }),
+      res,
+      mockVerifyToken,
+    )
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('returns 400 when GET /api/qr is called without siteId query param', async () => {
+    const res = new MockResponse()
+    await handleListQrCodes(
+      makeReq({ query: {}, headers: ownerAuthHeader() }),
+      res,
+      mockVerifyToken,
+    )
+    expect(res.statusCode).toBe(400)
+  })
+
+  it('returns 400 when siteId query param is an array with no string element', async () => {
+    const res = new MockResponse()
+    await handleListQrCodes(
+      makeReq({ query: { siteId: [42] }, headers: ownerAuthHeader() }),
+      res,
+      mockVerifyToken,
+    )
+    expect(res.statusCode).toBe(400)
+  })
+
+  // -------------------------------------------------------------------------
   // AC-03-05 — delete removes the document, returns 204
   // -------------------------------------------------------------------------
   it('AC-03-05 — DELETE removes the document and returns 204', async () => {

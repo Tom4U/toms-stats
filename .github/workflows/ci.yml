@@ -194,11 +194,17 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install chromium --with-deps
+
       - name: Run shared package tests
         run: pnpm --filter @tom4u-stats/shared run test
 
       - name: Run dashboard unit tests (server)
         run: pnpm --filter @tom4u-stats/dashboard run test:unit -- --project=server --run --reporter=github-actions
+
+      - name: Run dashboard unit tests (client)
+        run: pnpm --filter @tom4u-stats/dashboard run test:unit -- --project=client --run --reporter=github-actions
 
       - name: Generate dashboard coverage
         run: pnpm --filter @tom4u-stats/dashboard run test:coverage
