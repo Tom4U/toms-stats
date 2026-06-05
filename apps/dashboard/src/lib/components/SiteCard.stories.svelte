@@ -31,7 +31,12 @@
 <Story
 	name="High traffic"
 	args={{
-		site: { id: 'site-2', name: 'Tech News', domain: 'technews.io', createdAt: '2023-06-01T00:00:00Z' },
+		site: {
+			id: 'site-2',
+			name: 'Tech News',
+			domain: 'technews.io',
+			createdAt: '2023-06-01T00:00:00Z'
+		},
 		pageviews: 1284930,
 		visitors: 348210
 	}}
