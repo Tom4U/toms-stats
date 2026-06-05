@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.3.0](https://github.com/Tom4U/toms-stats/compare/dashboard-v0.2.1...dashboard-v0.3.0) (2026-06-05)
+
+
+### Features
+
+* **qr:** QR code manager (AC-03-01..07) ([#83](https://github.com/Tom4U/toms-stats/issues/83)) ([cc61663](https://github.com/Tom4U/toms-stats/commit/cc616631d245542ded9787895ad2cc14dbea4273))
+
 ## [0.2.1](https://github.com/Tom4U/toms-stats/compare/dashboard-v0.2.0...dashboard-v0.2.1) (2026-05-21)
 
 
