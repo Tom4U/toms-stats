@@ -36,10 +36,10 @@ Feature status is derived from the spec acceptance criteria — see [`specs/`](s
 | Referrer / UTM capture | Implemented | [01-tracking-api.md](specs/01-tracking-api.md) |
 | Browser / OS / device classification from User-Agent | Implemented | [01-tracking-api.md](specs/01-tracking-api.md) |
 | Custom events with key-value props (validation) | Implemented | [01-tracking-api.md](specs/01-tracking-api.md) |
-| Stats query API (read side) | Planned (AC-01-07/08/09) | [01-tracking-api.md](specs/01-tracking-api.md) |
+| Stats query API (read side) | Implemented | [01-tracking-api.md](specs/01-tracking-api.md) |
 | SvelteKit dashboard | Scaffolded; features pending | [02-dashboard.md](specs/02-dashboard.md) |
-| QR code manager | Planned | [03-qr-codes.md](specs/03-qr-codes.md) |
-| Google Auth (single owner) | Planned | [04-auth.md](specs/04-auth.md) |
+| QR code manager | Implemented | [03-qr-codes.md](specs/03-qr-codes.md) |
+| Google Auth (single owner) | Implemented | [04-auth.md](specs/04-auth.md) |
 
 ---
 

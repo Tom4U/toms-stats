@@ -11,3 +11,9 @@ allowBuilds:
   esbuild: true
   protobufjs: true
   re2: true
+
+overrides:
+  '@storybook/svelte': '10.3.6'
+
+patchedDependencies:
+  '@storybook/svelte-vite@10.3.6': patches/@storybook__svelte-vite@10.3.6.patch

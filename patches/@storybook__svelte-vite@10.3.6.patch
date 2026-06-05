@@ -1,0 +1,13 @@
+diff --git a/dist/preset.js b/dist/preset.js
+index 04f210f58b3bf9c65b81421bc90bbade9b5c99a1..02293c8a70255098b3d6b3fad7770ebe68cc1d9a 100644
+--- a/dist/preset.js
++++ b/dist/preset.js
+@@ -357,7 +357,7 @@ async function handleSvelteKit(plugins, options) {
+     "vite-plugin-svelte-kit",
+     "vite-plugin-sveltekit-setup",
+     "vite-plugin-sveltekit-compile"
+-  ]) && !framework.includes("@storybook/sveltekit"))
++  ]) && !framework.includes("@storybook/sveltekit") && !framework.includes("@storybook+sveltekit"))
+     throw new SvelteViteWithSvelteKitError();
+ }
+ 
