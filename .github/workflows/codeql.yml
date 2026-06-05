@@ -7,13 +7,9 @@ on:
   pull_request:
     branches:
       - main
-    paths-ignore:
-      - '**/*.md'
-      - 'specs/**'
-      - 'LICENSE'
-      - '.github/PULL_REQUEST_TEMPLATE.md'
-      - '.release-please-manifest.json'
-      - 'release-please-config.json'
+    # No paths-ignore: the branch ruleset has a code_scanning rule (tool CodeQL)
+    # that requires results on every PR head. Skipping CodeQL for docs-only PRs
+    # would leave that rule unsatisfied and block the merge — so run it always.
   schedule:
     - cron: '0 8 * * 1'
 
