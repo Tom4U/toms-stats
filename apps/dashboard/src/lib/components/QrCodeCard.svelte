@@ -20,6 +20,7 @@
 	// async, so $effect is the correct pattern for Promise-based side effects.
 	$effect(() => {
 		const url = qr.trackingUrl;
+		imageUrl = '';
 		renderError = false;
 		QRCode.toDataURL(url, { width: QR_SIZE })
 			.then((dataUrl) => {
