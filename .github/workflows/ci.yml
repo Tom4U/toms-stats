@@ -74,7 +74,7 @@ jobs:
               - '.github/workflows/ci.yml'
 
   lint-markdown:
-    name: Markdown Lint
+    name: Markdown Lint (run)
     runs-on: ubuntu-latest
     needs: [paths]
     if: needs.paths.outputs.markdown == 'true'
@@ -97,7 +97,7 @@ jobs:
         run: pnpm run lint:md
 
   spec-coupling:
-    name: Spec-Coupling Gate
+    name: Spec-Coupling Gate (run)
     runs-on: ubuntu-latest
     needs: [paths]
     if: needs.paths.outputs.code == 'true'
@@ -117,7 +117,7 @@ jobs:
           SPEC_COUPLING_EXEMPT: ${{ contains(github.event.pull_request.labels.*.name, 'no-spec-change') && '1' || '0' }}
 
   lint-tracker:
-    name: Lint Tracker
+    name: Lint Tracker (run)
     runs-on: ubuntu-latest
     needs: [paths]
     if: needs.paths.outputs.tracker == 'true' || needs.paths.outputs.shared == 'true'
@@ -146,7 +146,7 @@ jobs:
         run: pnpm --filter @tom4u-stats/tracker run lint
 
   lint-dashboard:
-    name: Lint Dashboard
+    name: Lint Dashboard (run)
     runs-on: ubuntu-latest
     needs: [paths]
     if: needs.paths.outputs.dashboard == 'true' || needs.paths.outputs.shared == 'true'
@@ -175,7 +175,7 @@ jobs:
         run: pnpm --filter @tom4u-stats/dashboard run lint
 
   test-unit:
-    name: Unit Tests
+    name: Unit Tests (run)
     runs-on: ubuntu-latest
     needs: [paths]
     if: needs.paths.outputs.dashboard == 'true' || needs.paths.outputs.shared == 'true'
@@ -211,7 +211,7 @@ jobs:
           retention-days: 1
 
   test-integration:
-    name: Integration Tests (Firebase Emulators)
+    name: Integration Tests (Firebase Emulators) (run)
     runs-on: ubuntu-latest
     needs: [paths]
     if: >
@@ -255,7 +255,7 @@ jobs:
           retention-days: 1
 
   build:
-    name: Build
+    name: Build (run)
     runs-on: ubuntu-latest
     needs: [paths, lint-tracker, lint-dashboard]
     # Run when code changed and neither lint job failed (skipped counts as passing here).
@@ -288,7 +288,7 @@ jobs:
         run: pnpm --filter @tom4u-stats/dashboard run build
 
   sonarqube:
-    name: SonarQube
+    name: SonarQube (run)
     runs-on: ubuntu-latest
     needs: [paths, test-unit, test-integration]
     # Only run when code changed and at least one test job actually produced coverage.
@@ -323,8 +323,11 @@ jobs:
           SONAR_HOST_URL: https://sonarcloud.io
 
   # Guard jobs — always run; succeed when the real job passed or was skipped (no relevant
-  # file changes). Same names as the real jobs so branch-protection needs no update.
-  # release-please PRs change only CHANGELOG/version files and skip all real jobs.
+  # file changes). These carry the branch-protection required-check NAMES; the real jobs
+  # above are suffixed "(run)" so each required check resolves to exactly ONE check-run (the
+  # guard). With classic branch protection a duplicate skipped run of the same name counts as
+  # unmet, which is why the real jobs must not share the required name.
+  # release-please / docs-only PRs skip all real jobs; the guards still report success.
   guard-markdown-lint:
     name: Markdown Lint
     runs-on: ubuntu-latest
