@@ -137,7 +137,11 @@ pnpm install
 pnpm exec firebase login
 pnpm exec firebase use toms-stats          # or create: firebase projects:create toms-stats
 pnpm exec firebase functions:secrets:set VISITOR_SALT
+pnpm exec firebase functions:secrets:set OWNER_UID   # your Firebase user UID (auth)
 ```
+
+Both secrets are declared in the `tracker` function (`onRequest({ secrets: [...] })`); if
+`OWNER_UID` is unset at runtime, every auth-protected `/api/*` route fails closed with `500`.
 
 Enable in Firebase Console:
 

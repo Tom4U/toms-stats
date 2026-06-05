@@ -48,16 +48,22 @@ that the decoded UID matches the configured owner UID.
 
 ## Owner UID Configuration
 
-The owner's Firebase UID is set as a Firebase Functions environment variable:
+The owner's Firebase UID is provided to the `tracker` function as a Firebase Functions
+**v2 secret**:
 
 ```text
 OWNER_UID = "<firebase-uid-from-console>"
 ```
 
-Set via: `npx firebase functions:config:set app.owner_uid="UID_HERE"` (legacy)
-or via Firebase Functions secrets (v2): `npx firebase functions:secrets:set OWNER_UID`
+Set via: `npx firebase functions:secrets:set OWNER_UID`
 
-Any request whose token UID ≠ `OWNER_UID` receives `403 Forbidden`.
+A v2 secret is only injected into `process.env` if the function **declares** it in its
+`onRequest({ secrets: [...] })` options. The `tracker` function therefore declares every
+secret it needs (`VISITOR_SALT`, `OWNER_UID`); omitting the declaration means the secret is
+unset at runtime and every auth-protected route fails closed with `500` (see AC-08).
+
+Any request whose token UID ≠ `OWNER_UID` receives `403 Forbidden`. If `OWNER_UID` is unset,
+the route fails closed with `500` rather than authorising an arbitrary signed-in account.
 
 ---
 
@@ -110,22 +116,23 @@ src/
 **When** they navigate to `/dashboard`
 **Then** they are redirected to `/login`.
 
-### AC-02: Stats API rejects missing token
+### AC-02: Protected API rejects missing token
 
-**Given** a GET to `/api/stats` with no `Authorization` header
+**Given** a request to any auth-protected `/api/*` route (`/api/stats`, `/api/sites`) with no
+`Authorization` header
 **Then** the function returns `401 Unauthorized`.
 
-### AC-03: Stats API rejects non-owner token
+### AC-03: Protected API rejects non-owner token
 
 **Given** a valid Firebase ID token for a UID that is not the `OWNER_UID`
-**When** used in a GET to `/api/stats`
+**When** used on any auth-protected `/api/*` route
 **Then** the function returns `403 Forbidden`.
 
-### AC-04: Stats API accepts owner token
+### AC-04: Protected API accepts owner token
 
 **Given** a valid Firebase ID token for the `OWNER_UID`
-**When** used in a GET to `/api/stats`
-**Then** the function returns `200` with data.
+**When** used on any auth-protected `/api/*` route
+**Then** the function returns a `2xx` success with data.
 
 ### AC-05: Sign-out clears session
 
@@ -144,3 +151,12 @@ src/
 **Given** the user has been on the dashboard for more than 1 hour
 **When** they interact with the dashboard
 **Then** `getIdToken(true)` is called automatically and the API call succeeds.
+
+### AC-08: tracker declares the secrets it reads at runtime
+
+**Given** the deployed `tracker` function reads `OWNER_UID` (auth) and `VISITOR_SALT`
+(visitor hashing) from `process.env`
+**When** the function is defined via `onRequest`
+**Then** its options declare those names in `secrets: [...]`, so Firebase injects the v2
+secrets into `process.env` at runtime. (Without the declaration the secrets are unset and
+every auth-protected route returns `500` — the production symptom this AC guards against.)

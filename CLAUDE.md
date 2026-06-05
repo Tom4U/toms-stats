@@ -91,6 +91,7 @@ Full schema → `specs/01-tracking-api.md`.
 | Var | Where | Purpose |
 |---|---|---|
 | `VISITOR_SALT` | Functions secret | daily visitor hash salt |
+| `OWNER_UID` | Functions secret | owner's Firebase UID; auth-protected `/api/*` routes 403 non-owners, 500 fail-closed if unset |
 | `GEOIP_DB_PATH` | Functions config | MaxMind GeoLite2 path (optional) |
 | `FIREBASE_SERVICE_ACCOUNT` | GH secret (deploy.yml) | Firebase Console → Service accounts → JSON |
 | `SONAR_TOKEN` | GH secret (ci.yml) | SonarCloud → Account → Security → Tokens |
@@ -98,7 +99,9 @@ Full schema → `specs/01-tracking-api.md`.
 `npm-publish.yml` uses npm Trusted Publishing (OIDC, no secret) via pnpm publish.
 One-time Firebase setup: `firebase login` → `projects:create toms-stats` → `use toms-stats`
 → Console enable Firestore(Native)/Auth(Google)/Hosting/Functions(Blaze) →
-`firebase functions:secrets:set VISITOR_SALT`.
+`firebase functions:secrets:set VISITOR_SALT` and `…:set OWNER_UID`.
+Both must also be declared in the `tracker` `onRequest({ secrets: [...] })` (router.ts) or
+Firebase will not inject them into `process.env` — see specs/04-auth.md AC-08.
 
 ## Release-Flow
 
