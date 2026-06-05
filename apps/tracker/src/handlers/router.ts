@@ -2,6 +2,7 @@ import { onRequest } from 'firebase-functions/v2/https'
 import { handleTrackEvent } from './track-event.js'
 import { handleGetStats } from './get-stats.js'
 import { handleGetSites, handleCreateSite } from './sites.js'
+import { handleCreateQrCode, handleListQrCodes, handleDeleteQrCode } from './qr.js'
 import { type TokenVerifier } from './auth.js'
 
 // ---------------------------------------------------------------------------
@@ -34,6 +35,38 @@ function normalizePath(path: string): string {
   return path.length > 1 && path.endsWith('/') ? path.slice(0, -1) : path
 }
 
+function methodNotAllowed(res: OutgoingRes): void {
+  res.status(405).json({ error: 'Method not allowed' })
+}
+
+async function routeEvent(req: RouterReq, res: OutgoingRes): Promise<void> {
+  if (req.method !== 'POST') { methodNotAllowed(res); return }
+  await handleTrackEvent(req, res)
+}
+
+async function routeStats(req: RouterReq, res: OutgoingRes, verifyToken?: TokenVerifier): Promise<void> {
+  if (req.method !== 'GET') { methodNotAllowed(res); return }
+  // defaultVerifyToken is module-private in get-stats; let the handler apply
+  // its own default when no verifier is injected.
+  if (verifyToken) {
+    await handleGetStats(req, res, verifyToken)
+  } else {
+    await handleGetStats(req, res)
+  }
+}
+
+async function routeSites(req: RouterReq, res: OutgoingRes, verifyToken?: TokenVerifier): Promise<void> {
+  if (req.method === 'GET') { await handleGetSites(req, res, verifyToken); return }
+  if (req.method === 'POST') { await handleCreateSite(req, res, verifyToken); return }
+  methodNotAllowed(res)
+}
+
+async function routeQr(req: RouterReq, res: OutgoingRes, verifyToken?: TokenVerifier): Promise<void> {
+  if (req.method === 'POST') { await handleCreateQrCode(req, res, verifyToken); return }
+  if (req.method === 'GET') { await handleListQrCodes(req, res, verifyToken); return }
+  methodNotAllowed(res)
+}
+
 export async function routeRequest(
   req: RouterReq,
   res: OutgoingRes,
@@ -41,40 +74,20 @@ export async function routeRequest(
 ): Promise<void> {
   const path = normalizePath(req.path)
 
-  if (path === '/api/event') {
-    if (req.method !== 'POST') {
-      res.status(405).json({ error: 'Method not allowed' })
-      return
-    }
-    await handleTrackEvent(req, res)
-    return
-  }
+  if (path === '/api/event') { await routeEvent(req, res); return }
+  if (path === '/api/stats') { await routeStats(req, res, verifyToken); return }
+  if (path === '/api/sites') { await routeSites(req, res, verifyToken); return }
+  if (path === '/api/qr') { await routeQr(req, res, verifyToken); return }
 
-  if (path === '/api/stats') {
-    if (req.method !== 'GET') {
-      res.status(405).json({ error: 'Method not allowed' })
+  // The dispatcher owns path parsing; handlers receive a plain qrId value, so
+  // their IncomingReq interfaces stay free of framework-specific route params.
+  const qrIdMatch = /^\/api\/qr\/([^/]+)$/.exec(path)
+  if (qrIdMatch) {
+    if (req.method === 'DELETE') {
+      await handleDeleteQrCode(req, res, qrIdMatch[1] ?? '', verifyToken)
       return
     }
-    // defaultVerifyToken is module-private in get-stats; let the handler apply
-    // its own default when no verifier is injected.
-    if (verifyToken) {
-      await handleGetStats(req, res, verifyToken)
-    } else {
-      await handleGetStats(req, res)
-    }
-    return
-  }
-
-  if (path === '/api/sites') {
-    if (req.method === 'GET') {
-      await handleGetSites(req, res, verifyToken)
-      return
-    }
-    if (req.method === 'POST') {
-      await handleCreateSite(req, res, verifyToken)
-      return
-    }
-    res.status(405).json({ error: 'Method not allowed' })
+    methodNotAllowed(res)
     return
   }
 

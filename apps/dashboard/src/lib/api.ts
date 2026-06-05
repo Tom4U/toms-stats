@@ -1,7 +1,9 @@
 import { getIdToken } from './auth.store.js';
 import type {
+	CreateQrCodePayload,
 	CreateSitePayload,
 	PageviewStatsResponse,
+	QrCode,
 	Site,
 	StatsQuery,
 	StatsResponse
@@ -51,6 +53,28 @@ export async function fetchPageviewStats(
 ): Promise<PageviewStatsResponse> {
 	const res = await fetchStats({ siteId, from, to, metric: 'pageviews' });
 	return res as PageviewStatsResponse;
+}
+
+export async function listQrCodes(siteId: string): Promise<QrCode[]> {
+	const headers = await authHeaders();
+	const params = new URLSearchParams({ siteId });
+	return apiFetch<QrCode[]>(`/api/qr?${params}`, { headers });
+}
+
+export async function createQrCode(payload: CreateQrCodePayload): Promise<QrCode> {
+	const headers = await authHeaders();
+	return apiFetch<QrCode>('/api/qr', { method: 'POST', headers, body: JSON.stringify(payload) });
+}
+
+export async function deleteQrCode(qrId: string): Promise<void> {
+	const headers = await authHeaders();
+	// DELETE returns 204 with no body, so we can't go through apiFetch (it parses JSON).
+	const res = await fetch(`/api/qr/${qrId}`, { method: 'DELETE', headers });
+	if (!res.ok) {
+		const body = await res.json().catch(() => null);
+		const message = (body as { error?: string } | null)?.error ?? res.statusText;
+		throw new Error(`API error ${res.status}: ${message}`);
+	}
 }
 
 export function isoDate(d: Date): string {

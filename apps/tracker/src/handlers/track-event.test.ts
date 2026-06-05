@@ -142,6 +142,34 @@ describe('handleTrackEvent', () => {
   })
 
   // -------------------------------------------------------------------------
+  // AC-03-04: a scan via a QR trackingUrl is attributed as a qr source
+  // -------------------------------------------------------------------------
+  it('AC-03-04 — pageview from a QR trackingUrl records utmSource "qr" and the campaign', async () => {
+    const req = makeReq({
+      body: {
+        siteId: SITE_ID,
+        type: 'pageview',
+        url: 'http://test.example.com/landing?utm_source=qr&utm_medium=qr&utm_campaign=Summer%20Sale',
+        referrer: '',
+        name: null,
+        props: {},
+      },
+      headers: { 'x-forwarded-for': TEST_IP, 'user-agent': TEST_UA },
+    })
+    const res = new MockResponse()
+
+    await handleTrackEvent(req, res, DAY_A)
+
+    expect(res.statusCode).toBe(204)
+
+    const snap = await db.collection('events').where('siteId', '==', SITE_ID).get()
+    const data = snap.docs[0].data()
+    expect(data['utmSource']).toBe('qr')
+    expect(data['utmMedium']).toBe('qr')
+    expect(data['utmCampaign']).toBe('Summer Sale')
+  })
+
+  // -------------------------------------------------------------------------
   // AC-01-02: No raw IP address in Firestore
   // -------------------------------------------------------------------------
   it('AC-01-02: does not write raw IP address to Firestore', async () => {
