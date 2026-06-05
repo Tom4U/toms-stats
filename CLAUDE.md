@@ -104,6 +104,28 @@ One-time Firebase setup: `firebase login` → `projects:create toms-stats` → `
 Both must also be declared in the `tracker` `onRequest({ secrets: [...] })` (router.ts) or
 Firebase will not inject them into `process.env` — see specs/04-auth.md AC-08.
 
+### One-time deploy provisioning (do before the first `deploy.yml` run)
+
+The CI deploy SA (`client_email` in `FIREBASE_SERVICE_ACCOUNT`,
+e.g. `firebase-adminsdk-…@<project>.iam.gserviceaccount.com`) and the project need this once
+— otherwise `deploy --only functions,firestore` fails with a cascade of `403`s. Commands use
+`gcloud` (set `PROJECT` and `SA` first):
+
+```bash
+gcloud services enable firestore.googleapis.com --project "$PROJECT"
+# (default) Firestore DB must exist — same region as the tracker function (europe-west3):
+gcloud firestore databases create --location=europe-west3 --type=firestore-native --project "$PROJECT"
+# Deploy-SA roles (functions/auth roles are already present on the Firebase admin SA):
+gcloud secrets add-iam-policy-binding VISITOR_SALT --project "$PROJECT" --member "serviceAccount:$SA" --role roles/secretmanager.admin
+gcloud secrets add-iam-policy-binding OWNER_UID    --project "$PROJECT" --member "serviceAccount:$SA" --role roles/secretmanager.admin
+gcloud projects add-iam-policy-binding "$PROJECT" --member "serviceAccount:$SA" --role roles/firebaserules.admin  # rules deploy
+gcloud projects add-iam-policy-binding "$PROJECT" --member "serviceAccount:$SA" --role roles/datastore.owner       # index deploy
+```
+
+`secretmanager.admin` (not just `secretAccessor`) is required: firebase-tools calls
+`versions.get` **and** `secrets.setIamPolicy` (it grants the function runtime SA access).
+Plus the `OWNER_UID` **GitHub Actions** secret for the rules substitution (`gh secret set OWNER_UID`).
+
 ## Release-Flow
 
 Versions are managed via [release-please](https://github.com/googleapis/release-please).

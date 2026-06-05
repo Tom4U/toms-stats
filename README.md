@@ -150,6 +150,16 @@ Enable in Firebase Console:
 - Firebase Hosting
 - Cloud Functions
 
+The `(default)` Firestore database must actually exist before the first deploy (enabling the
+API alone does not create it):
+
+```bash
+gcloud firestore databases create --location=europe-west3 --type=firestore-native --project toms-stats
+```
+
+The CI deploy service account also needs IAM roles for secrets, rules, and indexes — see the
+**One-time deploy provisioning** section in [CLAUDE.md](CLAUDE.md) for the exact `gcloud` grants.
+
 ### 3. Configure the owner UID for Firestore rules
 
 [firestore.rules](firestore.rules) ships with an `__OWNER_UID__` placeholder so the real UID
