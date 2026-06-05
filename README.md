@@ -150,9 +150,19 @@ Enable in Firebase Console:
 - Firebase Hosting
 - Cloud Functions
 
-### 3. Update Firestore security rules
+### 3. Configure the owner UID for Firestore rules
 
-Replace `OWNER_UID` in [firestore.rules](firestore.rules) with your actual Firebase user UID.
+[firestore.rules](firestore.rules) ships with an `__OWNER_UID__` placeholder so the real UID
+is never committed to this public repo. The CI deploy (`deploy.yml`) substitutes it from the
+`OWNER_UID` **GitHub Actions secret** before `firebase deploy`. Set it once:
+
+```bash
+gh secret set OWNER_UID --body "<your-firebase-uid>"
+```
+
+For local emulator work the placeholder is fine (the emulator does not enforce rules). If you
+deploy manually instead of via CI, replace `__OWNER_UID__` in a local copy before deploying —
+do not commit it.
 
 ### 4. Start local development
 

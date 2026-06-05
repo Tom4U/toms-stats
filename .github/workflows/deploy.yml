@@ -49,12 +49,24 @@ jobs:
           VITE_FIREBASE_MESSAGING_SENDER_ID: ${{ vars.VITE_FIREBASE_MESSAGING_SENDER_ID }}
           VITE_FIREBASE_APP_ID: ${{ vars.VITE_FIREBASE_APP_ID }}
 
-      - name: Deploy Functions
+      - name: Inject OWNER_UID into Firestore rules
+        env:
+          OWNER_UID: ${{ secrets.OWNER_UID }}
+        run: |
+          if [ -z "$OWNER_UID" ]; then
+            echo "::error::OWNER_UID secret is not set — refusing to deploy rules with the placeholder" >&2
+            exit 1
+          fi
+          # Substitute the placeholder; fail if it was not present (rules drifted).
+          grep -q '__OWNER_UID__' firestore.rules || { echo "::error::__OWNER_UID__ placeholder missing from firestore.rules" >&2; exit 1; }
+          sed -i "s/__OWNER_UID__/${OWNER_UID}/g" firestore.rules
+
+      - name: Deploy Functions and Firestore rules
         run: |
           SA_FILE=$(mktemp)
           trap 'rm -f "$SA_FILE"' EXIT
           printf '%s' '${{ secrets.FIREBASE_SERVICE_ACCOUNT }}' > "$SA_FILE"
-          GOOGLE_APPLICATION_CREDENTIALS="$SA_FILE" npx --ignore-scripts firebase-tools@15.18.0 deploy --only functions --force --project toms-stats
+          GOOGLE_APPLICATION_CREDENTIALS="$SA_FILE" npx --ignore-scripts firebase-tools@15.19.1 deploy --only functions,firestore --force --project toms-stats
 
       - name: Deploy to Firebase Hosting
         uses: FirebaseExtended/action-hosting-deploy@500ac625ca2dd40cbd15f7659af953801858032a # v0.10.0+node24

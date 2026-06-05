@@ -2,10 +2,12 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // Replace OWNER_UID with your actual Firebase UID before deploying.
-    // Find your UID in the Firebase Console → Authentication → Users.
+    // The owner UID below is a placeholder, substituted at deploy time from the
+    // OWNER_UID GitHub secret (see .github/workflows/deploy.yml) — never commit
+    // the real UID to this public repo. For local emulator use the placeholder
+    // is fine (the emulator does not enforce rules by default). specs/04-auth.md.
     function isOwner() {
-      return request.auth != null && request.auth.uid == 'OWNER_UID';
+      return request.auth != null && request.auth.uid == '__OWNER_UID__';
     }
 
     match /{document=**} {

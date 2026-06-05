@@ -92,6 +92,7 @@ Full schema → `specs/01-tracking-api.md`.
 |---|---|---|
 | `VISITOR_SALT` | Functions secret | daily visitor hash salt |
 | `OWNER_UID` | Functions secret | owner's Firebase UID; auth-protected `/api/*` routes 403 non-owners, 500 fail-closed if unset |
+| `OWNER_UID` | GH secret (deploy.yml) | same UID, substituted into `firestore.rules` `__OWNER_UID__` at deploy time |
 | `GEOIP_DB_PATH` | Functions config | MaxMind GeoLite2 path (optional) |
 | `FIREBASE_SERVICE_ACCOUNT` | GH secret (deploy.yml) | Firebase Console → Service accounts → JSON |
 | `SONAR_TOKEN` | GH secret (ci.yml) | SonarCloud → Account → Security → Tokens |
