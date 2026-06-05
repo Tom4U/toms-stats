@@ -14,19 +14,30 @@
 	let imageUrl = $state('');
 	let copied = $state(false);
 
+	let renderError = $state(false);
+
 	// WHY $effect: QRCode.toDataURL is async I/O — $derived.by does not support
 	// async, so $effect is the correct pattern for Promise-based side effects.
 	$effect(() => {
 		const url = qr.trackingUrl;
-		QRCode.toDataURL(url, { width: QR_SIZE }).then((dataUrl) => {
-			imageUrl = dataUrl;
-		});
+		renderError = false;
+		QRCode.toDataURL(url, { width: QR_SIZE })
+			.then((dataUrl) => {
+				imageUrl = dataUrl;
+			})
+			.catch(() => {
+				renderError = true;
+			});
 	});
 
 	async function copyTrackingUrl(): Promise<void> {
-		await navigator.clipboard.writeText(qr.trackingUrl);
-		copied = true;
-		setTimeout(() => (copied = false), 1500);
+		try {
+			await navigator.clipboard.writeText(qr.trackingUrl);
+			copied = true;
+			setTimeout(() => (copied = false), 1500);
+		} catch {
+			// Clipboard API unavailable (non-HTTPS context or permission denied) — silently no-op.
+		}
 	}
 
 	function download(): void {
@@ -65,6 +76,8 @@
 
 	{#if imageUrl}
 		<img src={imageUrl} alt="QR code for {qr.name}" class="mt-4 h-40 w-40" />
+	{:else if renderError}
+		<p class="mt-4 text-xs text-red-600">QR code could not be rendered.</p>
 	{/if}
 
 	<div class="mt-4 flex gap-2">
