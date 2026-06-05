@@ -1,5 +1,5 @@
-import { getAuth } from 'firebase-admin/auth'
 import { getFirestore, Timestamp } from 'firebase-admin/firestore'
+import { requireOwner, type TokenVerifier } from './auth.js'
 import type {
   StatMetric,
   PageviewStatsResponse,
@@ -28,21 +28,6 @@ interface OutgoingRes {
 }
 
 // ---------------------------------------------------------------------------
-// Token verification — injectable for tests
-// ---------------------------------------------------------------------------
-
-export type TokenVerifier = (token: string) => Promise<string | null>
-
-async function defaultVerifyToken(token: string): Promise<string | null> {
-  try {
-    const decoded = await getAuth().verifyIdToken(token)
-    return decoded.uid /* v8 ignore next — success path requires a live Firebase project; tests inject a mock verifier */
-  } catch {
-    return null
-  }
-}
-
-// ---------------------------------------------------------------------------
 // Helpers
 // ---------------------------------------------------------------------------
 
@@ -53,11 +38,6 @@ const VALID_METRICS = new Set<string>([
 function firstString(value: unknown): string {
   if (Array.isArray(value)) return typeof value[0] === 'string' ? value[0] : ''
   return typeof value === 'string' ? value : ''
-}
-
-function firstHeaderValue(value: HeaderValue): string {
-  if (Array.isArray(value)) return value[0] ?? ''
-  return value ?? ''
 }
 
 function daysBetween(from: string, to: string): number {
@@ -231,37 +211,15 @@ function buildLabelCountResponse(
 export async function handleGetStats(
   req: IncomingReq,
   res: OutgoingRes,
-  verifyToken: TokenVerifier = defaultVerifyToken,
+  verifyToken?: TokenVerifier,
 ): Promise<void> {
   if (req.method !== 'GET') {
     res.status(405).send('Method Not Allowed')
     return
   }
 
-  // Auth
-  const authHeader = firstHeaderValue(req.headers['authorization'])
-  if (!authHeader.startsWith('Bearer ')) {
-    res.status(401).json({ error: 'Missing or invalid Authorization header' })
-    return
-  }
-  const token = authHeader.slice(7)
-  const uid = await verifyToken(token)
-  if (!uid) {
-    res.status(401).json({ error: 'Invalid or expired token' })
-    return
-  }
-  // Fail-closed: a missing OWNER_UID would otherwise leave the stats endpoint
-  // open to any authenticated Google account.
-  const ownerUid = process.env['OWNER_UID']
-  if (!ownerUid) {
-    console.error('OWNER_UID env var is not set — refusing to serve stats')
-    res.status(500).json({ error: 'Server misconfiguration' })
-    return
-  }
-  if (uid !== ownerUid) {
-    res.status(403).json({ error: 'Forbidden' })
-    return
-  }
+  const uid = await requireOwner(req, res, verifyToken)
+  if (!uid) return
 
   // Params
   const paramResult = validateParams(req.query)

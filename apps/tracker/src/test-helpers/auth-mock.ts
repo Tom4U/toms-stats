@@ -1,4 +1,4 @@
-import type { TokenVerifier } from '../handlers/get-stats.js'
+import type { TokenVerifier } from '../handlers/auth.js'
 
 // Token values for use in get-stats tests. The mock verifier below maps each
 // token directly to a uid — so the token string IS the uid.

@@ -1,6 +1,8 @@
 import { onRequest } from 'firebase-functions/v2/https'
 import { handleTrackEvent } from './track-event.js'
-import { handleGetStats, type TokenVerifier } from './get-stats.js'
+import { handleGetStats } from './get-stats.js'
+import { handleGetSites, handleCreateSite } from './sites.js'
+import { type TokenVerifier } from './auth.js'
 
 // ---------------------------------------------------------------------------
 // Single entry point for all /api/* routes (see specs/01-tracking-api.md).
@@ -60,6 +62,19 @@ export async function routeRequest(
     } else {
       await handleGetStats(req, res)
     }
+    return
+  }
+
+  if (path === '/api/sites') {
+    if (req.method === 'GET') {
+      await handleGetSites(req, res, verifyToken)
+      return
+    }
+    if (req.method === 'POST') {
+      await handleCreateSite(req, res, verifyToken)
+      return
+    }
+    res.status(405).json({ error: 'Method not allowed' })
     return
   }
 
