@@ -4,7 +4,8 @@
 
 	const { Story } = defineMeta({
 		title: 'Components/LoadingSpinner',
-		component: LoadingSpinner
+		component: LoadingSpinner,
+		parameters: { layout: 'centered' }
 	});
 </script>
 
