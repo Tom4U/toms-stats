@@ -108,8 +108,12 @@ Firebase will not inject them into `process.env` — see specs/04-auth.md AC-08.
 
 The CI deploy SA (`client_email` in `FIREBASE_SERVICE_ACCOUNT`,
 e.g. `firebase-adminsdk-…@<project>.iam.gserviceaccount.com`) and the project need this once
-— otherwise `deploy --only functions,firestore` fails with a cascade of `403`s. Commands use
-`gcloud` (set `PROJECT` and `SA` first):
+— otherwise `deploy --only functions,firestore` fails with a cascade of `403`s.
+
+Run these with the [Google Cloud SDK](https://cloud.google.com/sdk/docs/install) (`gcloud`)
+installed and authenticated as a principal with Firestore + IAM-admin rights
+(`gcloud auth login`), or from [Cloud Shell](https://shell.cloud.google.com) where `gcloud` is
+pre-installed. Set `PROJECT` and `SA` first:
 
 ```bash
 gcloud services enable firestore.googleapis.com --project "$PROJECT"
