@@ -200,4 +200,75 @@ describe('routeRequest', () => {
 
     expect(res.statusCode).toBe(405)
   })
+
+  it('AC-03-01 — dispatches POST /api/qr to the create handler (201)', async () => {
+    const req = makeReq({
+      method: 'POST',
+      path: '/api/qr',
+      body: { siteId: SITE_ID, name: 'Router QR', targetUrl: 'https://router-test.example.com' },
+      headers: ownerAuthHeader(),
+    })
+    const res = new MockResponse()
+
+    await routeRequest(req, res, mockVerifyToken)
+
+    expect(res.statusCode).toBe(201)
+    const created = res.body as { id: string }
+    await db.collection('qr_codes').doc(created.id).delete()
+  })
+
+  it('AC-03-06 — dispatches GET /api/qr to the list handler (200)', async () => {
+    const req = makeReq({
+      method: 'GET',
+      path: '/api/qr',
+      query: { siteId: SITE_ID },
+      headers: ownerAuthHeader(),
+    })
+    const res = new MockResponse()
+
+    await routeRequest(req, res, mockVerifyToken)
+
+    expect(res.statusCode).toBe(200)
+    expect(Array.isArray(res.body)).toBe(true)
+  })
+
+  it('AC-03-05 — dispatches DELETE /api/qr/:qrId to the delete handler (204)', async () => {
+    const docRef = await db.collection('qr_codes').add({
+      siteId: SITE_ID,
+      name: 'router-del',
+      targetUrl: 'https://router-test.example.com',
+      trackingUrl: 'https://router-test.example.com/?utm_source=qr&utm_medium=qr&utm_campaign=router-del',
+      createdAt: FieldValue.serverTimestamp(),
+    })
+
+    const req = makeReq({
+      method: 'DELETE',
+      path: `/api/qr/${docRef.id}`,
+      headers: ownerAuthHeader(),
+    })
+    const res = new MockResponse()
+
+    await routeRequest(req, res, mockVerifyToken)
+
+    expect(res.statusCode).toBe(204)
+    expect((await docRef.get()).exists).toBe(false)
+  })
+
+  it('AC-03-05 — returns 405 for /api/qr/:qrId with a non-DELETE method', async () => {
+    const req = makeReq({ method: 'GET', path: '/api/qr/some-id', headers: ownerAuthHeader() })
+    const res = new MockResponse()
+
+    await routeRequest(req, res, mockVerifyToken)
+
+    expect(res.statusCode).toBe(405)
+  })
+
+  it('AC-03-01 — returns 405 for /api/qr with an unsupported method', async () => {
+    const req = makeReq({ method: 'PUT', path: '/api/qr', headers: ownerAuthHeader() })
+    const res = new MockResponse()
+
+    await routeRequest(req, res, mockVerifyToken)
+
+    expect(res.statusCode).toBe(405)
+  })
 })

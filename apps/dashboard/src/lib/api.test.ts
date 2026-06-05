@@ -21,7 +21,16 @@ function jsonResponse(body: unknown, status = 200): Response {
 }
 
 // Import after mocks
-const { fetchSites, createSite, fetchStats, dateRangePreset, isoDate } = await import('./api.js');
+const {
+	fetchSites,
+	createSite,
+	fetchStats,
+	dateRangePreset,
+	isoDate,
+	listQrCodes,
+	createQrCode,
+	deleteQrCode
+} = await import('./api.js');
 
 describe('dateRangePreset', () => {
 	it('returns correct span for 7d', () => {
@@ -138,6 +147,95 @@ describe('fetchStats', () => {
 		const secondCall = mockFetch.mock.calls[1][0] as string;
 		expect(firstCall).toContain('to=2024-01-07');
 		expect(secondCall).toContain('to=2024-01-31');
+	});
+});
+
+describe('listQrCodes', () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	it('AC-03-06: calls GET /api/qr with siteId and auth header', async () => {
+		const codes = [
+			{
+				id: 'qr-1',
+				siteId: 'site-1',
+				name: 'Flyer',
+				targetUrl: 'https://example.com',
+				trackingUrl: 'https://example.com/?utm_source=qr&utm_medium=qr&utm_campaign=Flyer',
+				createdAt: '2024-01-01T00:00:00Z'
+			}
+		];
+		mockFetch.mockResolvedValueOnce(jsonResponse(codes));
+
+		const result = await listQrCodes('site-1');
+
+		const call = mockFetch.mock.calls[0][0] as string;
+		expect(call).toContain('/api/qr');
+		expect(call).toContain('siteId=site-1');
+		expect(mockFetch).toHaveBeenCalledWith(
+			expect.any(String),
+			expect.objectContaining({
+				headers: expect.objectContaining({ Authorization: 'Bearer test-token' })
+			})
+		);
+		expect(result).toEqual(codes);
+	});
+});
+
+describe('createQrCode', () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	it('AC-03-01: posts to /api/qr with the create payload', async () => {
+		const qr = {
+			id: 'qr-1',
+			siteId: 'site-1',
+			name: 'Summer Sale',
+			targetUrl: 'https://shop.example.com',
+			trackingUrl: 'https://shop.example.com/?utm_source=qr&utm_medium=qr&utm_campaign=Summer+Sale',
+			createdAt: '2024-01-01T00:00:00Z'
+		};
+		mockFetch.mockResolvedValueOnce(jsonResponse(qr, 201));
+
+		const result = await createQrCode({
+			siteId: 'site-1',
+			name: 'Summer Sale',
+			targetUrl: 'https://shop.example.com'
+		});
+
+		expect(mockFetch).toHaveBeenCalledWith(
+			'/api/qr',
+			expect.objectContaining({
+				method: 'POST',
+				body: JSON.stringify({
+					siteId: 'site-1',
+					name: 'Summer Sale',
+					targetUrl: 'https://shop.example.com'
+				})
+			})
+		);
+		expect(result).toEqual(qr);
+		expect('imageBase64' in (result as unknown as Record<string, unknown>)).toBe(false);
+	});
+});
+
+describe('deleteQrCode', () => {
+	beforeEach(() => vi.clearAllMocks());
+
+	it('AC-03-05: sends DELETE /api/qr/:id and resolves on 204', async () => {
+		mockFetch.mockResolvedValueOnce(new Response(null, { status: 204 }));
+
+		await expect(deleteQrCode('qr-1')).resolves.toBeUndefined();
+
+		expect(mockFetch).toHaveBeenCalledWith(
+			'/api/qr/qr-1',
+			expect.objectContaining({ method: 'DELETE' })
+		);
+	});
+
+	it('AC-03-05: throws on a non-ok delete response', async () => {
+		mockFetch.mockResolvedValueOnce(
+			new Response('', { status: 500, statusText: 'Internal Server Error' })
+		);
+		await expect(deleteQrCode('qr-1')).rejects.toThrow('API error 500: Internal Server Error');
 	});
 });
 

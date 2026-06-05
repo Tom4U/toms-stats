@@ -69,12 +69,13 @@ Auth-protected.
   "name": "Flyer Campaign Q2",
   "targetUrl": "https://example.com/landing",
   "trackingUrl": "https://example.com/landing?utm_source=qr&utm_medium=qr&utm_campaign=Flyer+Campaign+Q2",
-  "imageBase64": "data:image/png;base64,iVBORw0KGgoAAAANS...",
   "createdAt": "2024-03-15T10:00:00Z"
 }
 ```
 
-The `imageBase64` field contains a PNG QR code image (400×400 px) encoding the `trackingUrl`.
+The response carries no image. The QR code is rendered client-side from `trackingUrl`
+using the `qrcode` library (400×400 px), so `trackingUrl` is the single source of truth
+and no PNG is persisted or transferred over the API.
 
 ### GET `/api/qr?siteId=abc123` — List QR Codes
 
@@ -93,8 +94,8 @@ Auth-protected. Returns all QR codes for a site, ordered by `createdAt` descendi
 ]
 ```
 
-Note: `imageBase64` is **not** returned in the list response (bandwidth). The client
-can regenerate the image from `trackingUrl` using the `qrcode` library in the browser.
+Note: no image is returned by any endpoint. The client renders the QR code from
+`trackingUrl` using the `qrcode` library in the browser.
 
 ### DELETE `/api/qr/:qrId` — Delete QR Code
 
@@ -146,12 +147,15 @@ The image is generated client-side at 400×400 px using the `qrcode` npm package
 
 **Given** a POST to `/api/qr` with `name: "Summer Sale"` and `targetUrl: "https://shop.example.com"`
 **When** the function creates the QR code
-**Then** `trackingUrl` equals `"https://shop.example.com?utm_source=qr&utm_medium=qr&utm_campaign=Summer+Sale"`.
+**Then** `trackingUrl` equals `"https://shop.example.com/?utm_source=qr&utm_medium=qr&utm_campaign=Summer+Sale"`.
+
+(The tracking URL is composed with the WHATWG `URL`/`searchParams` API so existing query
+parameters and fragments on `targetUrl` are preserved; `searchParams` form-encodes spaces as `+`.)
 
 ### AC-02: QR code image encodes the tracking URL
 
-**Given** a newly created QR code
-**When** the `imageBase64` PNG is decoded and the QR data is read
+**Given** a QR code rendered in the dashboard
+**When** the client generates the PNG from `trackingUrl` via the `qrcode` library and the QR data is read
 **Then** the encoded string equals the `trackingUrl`.
 
 ### AC-03: Invalid targetUrl → 400
