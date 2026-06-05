@@ -79,14 +79,20 @@ service cloud.firestore {
     // Only the owner can read/write anything
     match /{document=**} {
       allow read, write: if request.auth != null
-                         && request.auth.uid == '<OWNER_UID>';
+                         && request.auth.uid == '__OWNER_UID__';
     }
   }
 }
 ```
 
-In production, replace `<OWNER_UID>` with the actual UID.
-For the emulator, any authenticated user is allowed (emulator ignores rules by default).
+`firestore.rules` is committed with the `__OWNER_UID__` placeholder so the real UID is never
+checked into this public repo. The CI deploy (`deploy.yml`) substitutes it from the
+`OWNER_UID` GitHub Actions secret (same value as the Functions secret) before
+`firebase deploy --only functions,firestore`; the deploy fails closed if the secret is unset
+or the placeholder is missing (see AC-09). Locally the placeholder is left as-is: tracker tests
+and the API use the Admin SDK / Cloud Functions, which bypass rules. (The Firestore emulator
+*does* enforce these rules for direct client-SDK access — `firebase.json` points it at
+`firestore.rules` — so client-SDK reads against the emulator need a real UID substituted first.)
 
 ---
 
@@ -160,3 +166,12 @@ src/
 **Then** its options declare those names in `secrets: [...]`, so Firebase injects the v2
 secrets into `process.env` at runtime. (Without the declaration the secrets are unset and
 every auth-protected route returns `500` — the production symptom this AC guards against.)
+
+### AC-09: Firestore rules get the owner UID at deploy time, not from the repo
+
+**Given** `firestore.rules` is committed with an `__OWNER_UID__` placeholder (no real UID in
+the public repo)
+**When** `deploy.yml` runs on a push to `main`
+**Then** it substitutes `__OWNER_UID__` with the `OWNER_UID` GitHub Actions secret and deploys
+`--only functions,firestore`; the job fails closed if the secret is empty or the placeholder
+is absent, so the placeholder is never deployed as a literal rule.
