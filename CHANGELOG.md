@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.5.0](https://github.com/Tom4U/toms-stats/compare/toms-stats-v0.4.3...toms-stats-v0.5.0) (2026-06-05)
+
+
+### Features
+
+* **tracker:** add /api/sites GET+POST handler and shared requireOwner ([#73](https://github.com/Tom4U/toms-stats/issues/73)) ([3a4da39](https://github.com/Tom4U/toms-stats/commit/3a4da39647819abab821b4d87c37c2e5d89eec95)), closes [#71](https://github.com/Tom4U/toms-stats/issues/71)
+* **tracker:** add single `tracker` router for all /api/* routes ([#72](https://github.com/Tom4U/toms-stats/issues/72)) ([6a619dc](https://github.com/Tom4U/toms-stats/commit/6a619dcfdb89522d0cd4d7815098124bb7ab250f)), closes [#57](https://github.com/Tom4U/toms-stats/issues/57)
+
+
+### Bug Fixes
+
+* **ci:** use RELEASE_PLEASE_PAT for undraft GraphQL mutation in ci-ready workflow ([#70](https://github.com/Tom4U/toms-stats/issues/70)) ([c7de428](https://github.com/Tom4U/toms-stats/commit/c7de428b40f07b2a01ce5504f80b60d27c2e7ecc))
+* **tracker:** explicitly declare Stryker plugins for pnpm compatibility ([#68](https://github.com/Tom4U/toms-stats/issues/68)) ([e47a25e](https://github.com/Tom4U/toms-stats/commit/e47a25e1e67d65310fc00afb7fdb82e9e67f9410))
+
 ## [0.4.3](https://github.com/Tom4U/toms-stats/compare/toms-stats-v0.4.2...toms-stats-v0.4.3) (2026-06-04)
 
 
