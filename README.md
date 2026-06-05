@@ -160,9 +160,12 @@ is never committed to this public repo. The CI deploy (`deploy.yml`) substitutes
 gh secret set OWNER_UID --body "<your-firebase-uid>"
 ```
 
-For local emulator work the placeholder is fine (the emulator does not enforce rules). If you
-deploy manually instead of via CI, replace `__OWNER_UID__` in a local copy before deploying —
-do not commit it.
+The placeholder is fine for this repo's local flows: tracker tests and the API go through the
+Admin SDK / Cloud Functions, which bypass Firestore rules. (Note the Firestore emulator *does*
+enforce these rules for direct client-SDK access, since `firebase.json` points it at
+`firestore.rules` — so if you exercise client-SDK reads against the emulator, substitute a real
+UID locally first.) If you deploy manually instead of via CI, replace `__OWNER_UID__` in a local
+copy before deploying — do not commit it.
 
 ### 4. Start local development
 

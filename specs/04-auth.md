@@ -89,8 +89,10 @@ service cloud.firestore {
 checked into this public repo. The CI deploy (`deploy.yml`) substitutes it from the
 `OWNER_UID` GitHub Actions secret (same value as the Functions secret) before
 `firebase deploy --only functions,firestore`; the deploy fails closed if the secret is unset
-or the placeholder is missing (see AC-09). For the emulator the placeholder is left as-is
-(emulator ignores rules by default).
+or the placeholder is missing (see AC-09). Locally the placeholder is left as-is: tracker tests
+and the API use the Admin SDK / Cloud Functions, which bypass rules. (The Firestore emulator
+*does* enforce these rules for direct client-SDK access — `firebase.json` points it at
+`firestore.rules` — so client-SDK reads against the emulator need a real UID substituted first.)
 
 ---
 

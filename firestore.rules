@@ -4,8 +4,10 @@ service cloud.firestore {
 
     // The owner UID below is a placeholder, substituted at deploy time from the
     // OWNER_UID GitHub secret (see .github/workflows/deploy.yml) — never commit
-    // the real UID to this public repo. For local emulator use the placeholder
-    // is fine (the emulator does not enforce rules by default). specs/04-auth.md.
+    // the real UID to this public repo. The placeholder is fine for this repo's
+    // local flows because tracker tests and the API go through the Admin SDK /
+    // Cloud Functions, which bypass rules; the Firestore emulator DOES enforce
+    // these rules for direct client-SDK access. specs/04-auth.md.
     function isOwner() {
       return request.auth != null && request.auth.uid == '__OWNER_UID__';
     }
